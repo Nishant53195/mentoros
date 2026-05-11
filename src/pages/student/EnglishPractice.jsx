@@ -23,6 +23,7 @@ export default function EnglishPractice() {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [startTime, setStartTime] = useState(null);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -47,7 +48,8 @@ export default function EnglishPractice() {
 
   const handleSubmit = async () => {
     if (!window.confirm("Submit your answers?")) return;
-    
+    const endTime = Date.now();
+  const secondsUsed = Math.floor((endTime - startTime) / 1000); // Time in seconds
     let attempted = 0, correct = 0, incorrect = 0;
     test.questions.forEach((q, i) => {
       if (answers[i] !== undefined) {
@@ -71,7 +73,8 @@ export default function EnglishPractice() {
       type: test.type,
       scorecard: result,
       answers,
-      timestamp: new Date().toISOString()
+      timeTaken: secondsUsed, // NEW FIELD
+    timestamp: new Date().toISOString()
     });
 
     setIsTesting(false);
@@ -241,12 +244,13 @@ export default function EnglishPractice() {
                     </div>
                   ) : (
                     <Button 
-                      onClick={() => { 
-                        setTest(t); 
-                        setAnswers({});
-                        setCurrentQ(0);
-                        setIsTesting(true); 
-                      }} 
+  onClick={() => { 
+    setTest(t); 
+    setAnswers({});
+    setCurrentQ(0);
+    setStartTime(Date.now()); // Capture start time
+    setIsTesting(true); 
+  }}
                       className="w-full bg-blue-600 text-white font-black h-12 rounded-2xl shadow-lg mt-auto hover:bg-blue-700 transition-all"
                     >
                       Start Practice
@@ -510,10 +514,11 @@ function AnalysisDashboard({ submissions }) {
     setLoadingLeaderboard(true);
     // Query submissions for today's date, ordered by marks
     const q = query(
-      collection(db, "english_submissions"), 
-      where("date", "==", today),
-      orderBy("scorecard.marks", "desc")
-    );
+  collection(db, "english_submissions"), 
+  where("date", "==", today),
+  orderBy("scorecard.marks", "desc"),
+  orderBy("timeTaken", "asc") // Tie-breaker!
+);
 
     const unsub = onSnapshot(q, (snap) => {
       const globalSubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));

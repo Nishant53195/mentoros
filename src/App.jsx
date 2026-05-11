@@ -37,13 +37,13 @@ function App() {
         <Route path="/waiting" element={<Waiting />} />
         
         {/* Mentor Routes */}
-        <Route path="/mentor-os-dashboard-53195" element={<Dashboard />} />
-        <Route path="/mentor-os-53195/approvals" element={<Approvals />} />
-        <Route path="/mentor-os-53195/schedule" element={<Schedule />} />
-        <Route path="/mentor-os-53195/english" element={<EnglishCreator />} />
-        <Route path="/mentor-os-53195/quant" element={<Placeholder title="Quant Practice" />} />
-        <Route path="/mentor-os-53195/analytics" element={<Placeholder title="Analytics" />} />
-        <Route path="/mentor-os-53195/profile" element={<Placeholder title="Profile" />} />
+        <Route path="/mentor-dashboard" element={<Dashboard />} />
+        <Route path="/mentor/approvals" element={<Approvals />} />
+        <Route path="/mentor/schedule" element={<Schedule />} />
+        <Route path="/mentor/english" element={<EnglishCreator />} />
+        <Route path="/mentor/quant" element={<Placeholder title="Quant Practice" />} />
+        <Route path="/mentor/analytics" element={<Placeholder title="Analytics" />} />
+        <Route path="/mentor/profile" element={<Placeholder title="Profile" />} />
         
 
         {/* Student Routes */}

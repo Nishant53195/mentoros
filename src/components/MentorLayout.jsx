@@ -58,11 +58,11 @@ export default function MentorLayout({ children }) {
           ))}
         </nav>
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-  <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
-    <LogOut size={22} />
-    {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
-  </button>
-</div>
+          <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
+            <LogOut size={22} />
+            {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
+          </button>
+        </div>
       </aside>
 
       {/* MOBILE BOTTOM NAVBAR */}
@@ -80,9 +80,12 @@ export default function MentorLayout({ children }) {
           </button>
           
         ))}
-        <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
-    <LogOut size={22} />
-    {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
+        <button
+    onClick={handleSignOut}
+    className="flex flex-col items-center p-2 rounded-lg text-slate-500 hover:text-red-500"
+  >
+    <LogOut size={20} />
+    <span className="text-[10px] mt-1 font-bold">Exit</span>
   </button>
       </nav>
       <div className="p-4 border-t border-slate-100 dark:border-slate-800">

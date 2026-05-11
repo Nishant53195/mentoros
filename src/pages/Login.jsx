@@ -23,7 +23,7 @@ export default function Login() {
   useEffect(() => {
     if (!authLoading && user) {
       if (user.email === MENTOR_EMAIL) {
-        navigate("/mentor-os-dashboard-53195");
+        navigate("/mentor-dashboard");
       } else {
         navigate("/student-dashboard");
       }
@@ -40,7 +40,7 @@ export default function Login() {
       const loggedInUser = result.user;
 
       if (loggedInUser.email === MENTOR_EMAIL) {
-        navigate("/mentor-os-dashboard-53195");
+        navigate("/mentor-dashboard");
         return;
       }
 

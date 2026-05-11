@@ -37,7 +37,7 @@ function App() {
         <Route path="/waiting" element={<Waiting />} />
         
         {/* Mentor Routes */}
-        <Route path="/mentor-dashboard" element={<Dashboard />} />
+        <Route path="/mentor-dashboard" element={<ProtectedRoute adminOnly={true}><Dashboard /></ProtectedRoute>} />
         <Route path="/mentor/approvals" element={<Approvals />} />
         <Route path="/mentor/schedule" element={<Schedule />} />
         <Route path="/mentor/english" element={<EnglishCreator />} />

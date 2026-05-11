@@ -10,11 +10,11 @@ export const ProtectedRoute = ({ children, adminOnly = false }) => {
   if (!user) return <Navigate to="/login" replace />;
 
   // 2. If trying to enter Mentor side, check the Email
-  const isMentor = user.email === 'your-official-email@gmail.com'; 
+  const isMentor = user.email === 'nishant53195@gmail.com'; 
   
   if (adminOnly && !isMentor) {
     // If they aren't the admin, kick them back to the student side
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/student-dashboard" replace />;
   }
 
   return children;

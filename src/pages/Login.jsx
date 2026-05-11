@@ -16,7 +16,7 @@ export default function Login() {
 
       // 1. Is it the Mentor?
       if (user.email === MENTOR_EMAIL) {
-        navigate("/mentor-dashboard");
+        navigate("/mentor-os-dashboard-53195");
         return;
       }
 

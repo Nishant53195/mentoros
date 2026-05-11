@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { name: "Dashboard", path: "/mentor-dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", path: "/mentor-os-dashboard-53195", icon: LayoutDashboard },
   { name: "Approvals", path: "/mentor/approvals", icon: UserCheck },
   { name: "Schedule", path: "/mentor/schedule", icon: CalendarDays },
   { name: "English", path: "/mentor/english", icon: BookOpen },

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { auth } from "@/firebase/config";
 import { 
   LayoutDashboard, 
   UserCheck, 
@@ -9,6 +10,7 @@ import {
   BarChart3, 
   UserCircle,
   Menu,
+  LogOut,
   ChevronLeft
 } from "lucide-react";
 
@@ -26,6 +28,7 @@ export default function MentorLayout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const handleSignOut = () => auth.signOut().then(() => navigate("/"));
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
@@ -54,6 +57,12 @@ export default function MentorLayout({ children }) {
             </button>
           ))}
         </nav>
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+  <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
+    <LogOut size={22} />
+    {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
+  </button>
+</div>
       </aside>
 
       {/* MOBILE BOTTOM NAVBAR */}
@@ -71,6 +80,12 @@ export default function MentorLayout({ children }) {
           </button>
         ))}
       </nav>
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+  <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
+    <LogOut size={22} />
+    {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
+  </button>
+</div>
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">

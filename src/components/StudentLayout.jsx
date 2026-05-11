@@ -102,6 +102,13 @@ export default function StudentLayout({ children }) {
             <span className="text-[10px] mt-1 font-bold">{item.name.split(' ')[0]}</span>
           </button>
         ))}
+        <button
+    onClick={handleSignOut}
+    className="flex flex-col items-center p-2 rounded-lg text-slate-500 hover:text-red-500"
+  >
+    <LogOut size={20} />
+    <span className="text-[10px] mt-1 font-bold">Exit</span>
+  </button>
       </nav>
 
       {/* MAIN CONTENT */}

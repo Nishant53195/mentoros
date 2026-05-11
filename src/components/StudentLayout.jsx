@@ -55,7 +55,7 @@ export default function StudentLayout({ children }) {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Zap size={18} className="text-white fill-white" />
               </div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white">MentorOS</span>
+              <span className="font-bold text-xl text-slate-900 dark:text-white">Progressify</span>
             </div>
           )}
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">

@@ -32,7 +32,7 @@ export default function MentorLayout({ children }) {
       {/* DESKTOP SIDEBAR */}
       <aside className={`hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
         <div className="p-6 flex items-center justify-between">
-          {!isCollapsed && <span className="font-bold text-xl text-blue-600">MentorOS</span>}
+          {!isCollapsed && <span className="font-bold text-xl text-blue-600">Progressify</span>}
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
             <Menu size={20} />
           </button>

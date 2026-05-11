@@ -59,7 +59,7 @@ export default function Login() {
           
           {/* Typography Fixed */}
           <h1 className="text-5xl font-extrabold text-white tracking-tight mb-6">
-            Mentor<span className="text-blue-500">OS</span>
+            Progressify<span className="text-blue-500">OS</span>
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed font-medium">
             Your personalized hub for cracking SSC & Banking exams. Track your progress, get expert mentoring, and achieve your goals.

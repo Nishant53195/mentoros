@@ -155,6 +155,23 @@ export default function EnglishCreator() {
       />
     </div>
   ))}
+  {/* Add this below the grid of options */}
+<div className="mt-6 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-800">
+  <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+    <Edit3 size={14} /> Mentor's Explanation
+  </label>
+  <textarea 
+    value={questions[currentIdx].explanation} 
+    onChange={(e) => { 
+      const q = [...questions]; 
+      q[currentIdx].explanation = e.target.value; 
+      setQuestions(q); 
+    }} 
+    className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-none text-xs font-bold text-slate-700 dark:text-slate-300 resize-none shadow-inner" 
+    placeholder="Explain why the correct answer is right..."
+    rows={3}
+  />
+</div>
 </div>
             </div>
             <Button onClick={saveTest} className="w-full h-16 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 text-white font-black text-lg shadow-xl">Push Universal Test</Button>

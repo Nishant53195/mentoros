@@ -33,23 +33,23 @@ function App() {
       <Routes>
         {/* Core Auth Flow */}
         <Route path="/" element={<Login />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/waiting" element={<Waiting />} />
+        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+        <Route path="/waiting" element={<ProtectedRoute><Waiting /></ProtectedRoute>} />
         
         {/* Mentor Routes */}
-        <Route path="/mentor-dashboard" element={<Dashboard />} />
-        <Route path="/mentor/approvals" element={<Approvals />} />
-        <Route path="/mentor/schedule" element={<Schedule />} />
-        <Route path="/mentor/english" element={<EnglishCreator />} />
+        <Route path="/mentor-dashboard" element={<ProtectedRoute adminOnly={true}><Dashboard /></ProtectedRoute>} />
+        <Route path="/mentor/approvals" element={<ProtectedRoute adminOnly={true}><Approvals /></ProtectedRoute>} />
+        <Route path="/mentor/schedule" element={<ProtectedRoute adminOnly={true}><Schedule /></ProtectedRoute>} />
+        <Route path="/mentor/english" element={<ProtectedRoute adminOnly={true}><EnglishCreator /></ProtectedRoute>} />
         <Route path="/mentor/quant" element={<Placeholder title="Quant Practice" />} />
         <Route path="/mentor/analytics" element={<Placeholder title="Analytics" />} />
         <Route path="/mentor/profile" element={<Placeholder title="Profile" />} />
         
 
         {/* Student Routes */}
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
-        <Route path="/student/tasks" element={<DailyTasks />} />
-        <Route path="/student/english" element={<EnglishPractice />} />
+        <Route path="/student-dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+        <Route path="/student/tasks" element={<ProtectedRoute><DailyTasks /></ProtectedRoute>} />
+        <Route path="/student/english" element={<ProtectedRoute><EnglishPractice /></ProtectedRoute>} />
         <Route path="/student/quant" element={<Placeholder title="Quant Topic Practice" />} />
         <Route path="/student/analytics" element={<Placeholder title="My Analytics" />} />
         <Route path="/student/profile" element={<Placeholder title="My Profile" />} />

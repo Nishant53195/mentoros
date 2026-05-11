@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import Waiting from "./pages/Waiting";
 import MentorLayout from "./components/MentorLayout";
+import Approvals from "./pages/mentor/Approvals";
+import Dashboard from "./pages/mentor/Dashboard";
 
 // We will create these pages next
 const MentorPlaceholder = ({ title }) => (
@@ -23,8 +25,8 @@ function App() {
         <Route path="/waiting" element={<Waiting />} />
         
         {/* Mentor Routes */}
-        <Route path="/mentor-dashboard" element={<MentorPlaceholder title="Admin Overview" />} />
-        <Route path="/mentor/approvals" element={<MentorPlaceholder title="Student Approvals" />} />
+        <Route path="/mentor-dashboard" element={<Dashboard />} />
+        <Route path="/mentor/approvals" element={<Approvals />} />
         <Route path="/mentor/schedule" element={<MentorPlaceholder title="Study Schedules" />} />
         <Route path="/mentor/english" element={<MentorPlaceholder title="English Practice" />} />
         <Route path="/mentor/quant" element={<MentorPlaceholder title="Quant Practice" />} />
@@ -33,6 +35,8 @@ function App() {
 
         {/* Student Dashboard Placeholder */}
         <Route path="/student-dashboard" element={<div className="p-10">Welcome Student!</div>} />
+
+        <Route path="/mentor/approvals" element={<Approvals />} />
       </Routes>
     </Router>
   );

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { 
   CheckCircle2, Trophy, Clock, History, LayoutDashboard, 
   ChevronLeft, ChevronRight, Bookmark, Send, BarChart3, TrendingUp,
-  Target, Activity 
+  Target, Activity, Calendar, Medal, Crown 
 } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -497,11 +497,123 @@ function LegendItem({ color, label }) {
 }
 
 // COMPONENT: ANALYSIS DASHBOARD (DUAL GRAPHS)
+// src/pages/student/EnglishPractice.jsx
+
 function AnalysisDashboard({ submissions }) {
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const types = ["RC", "Cloze"];
+  const today = new Date().toISOString().split('T')[0];
+
+  // Fetch today's global leaderboard across all students
+  useEffect(() => {
+    setLoadingLeaderboard(true);
+    // Query submissions for today's date, ordered by marks
+    const q = query(
+      collection(db, "english_submissions"), 
+      where("date", "==", today),
+      orderBy("scorecard.marks", "desc")
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      const globalSubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // If a student has multiple entries (RC and Cloze), they will show as separate rows
+      setLeaderboard(globalSubs);
+      setLoadingLeaderboard(false);
+    });
+
+    return () => unsub();
+  }, [today]);
 
   return (
     <div className="space-y-16 pb-20 animate-in fade-in duration-700">
+      
+      {/* --- SECTION 1: TODAY'S HALL OF FAME (LEADERBOARD) --- */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+           <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+             <Crown className="text-yellow-500" size={28} /> Today's Hall of Fame
+           </h3>
+           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-2xl">
+             <Calendar size={14} className="text-slate-400" />
+             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+               {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+             </p>
+           </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                  <th className="p-6">Rank</th>
+                  <th className="p-6">Student</th>
+                  <th className="p-6">Task</th>
+                  <th className="p-6 text-center">Correct</th>
+                  <th className="p-6 text-right">Marks</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {leaderboard.map((entry, index) => {
+                  const isCurrentUser = entry.userId === auth.currentUser.uid;
+                  return (
+                    <tr key={entry.id} className={`${isCurrentUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''} transition-colors`}>
+                      <td className="p-6">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full font-black text-xs">
+                          {index === 0 ? <Medal className="text-yellow-500" size={22}/> : 
+                           index === 1 ? <Medal className="text-slate-300" size={22}/> : 
+                           index === 2 ? <Medal className="text-amber-600" size={22}/> : 
+                           <span className="text-slate-400">{index + 1}</span>}
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black uppercase">
+                            {entry.userName?.charAt(0)}
+                          </div>
+                          <span className={`text-sm font-bold ${isCurrentUser ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'}`}>
+                            {entry.userName} {isCurrentUser && "(You)"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <span className="text-[10px] font-black uppercase text-slate-400 border border-slate-200 dark:border-slate-800 px-2 py-0.5 rounded">
+                          {entry.type}
+                        </span>
+                      </td>
+                      <td className="p-6 text-center text-sm font-black text-emerald-500">
+                        {entry.scorecard.correct}
+                      </td>
+                      <td className="p-6 text-right font-black text-slate-900 dark:text-white">
+                        {entry.scorecard.marks.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {leaderboard.length === 0 && !loadingLeaderboard && (
+                  <tr>
+                    <td colSpan="5" className="p-10 text-center text-slate-400 font-bold italic">
+                      No submissions recorded yet. Be the first to rank!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div className="px-4"><hr className="border-slate-100 dark:border-slate-800" /></div>
+
+      {/* --- SECTION 2: PERSONAL ANALYTICS (GRAPHS) --- */}
+      <div className="px-2">
+        <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <Target className="text-blue-600" /> Personal Growth Curve
+        </h3>
+        <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Historical Performance Tracking</p>
+      </div>
+
       {types.map((type) => {
         const rawData = [...submissions].filter((s) => s.type === type).reverse();
         const data = rawData.map(s => ({
@@ -515,8 +627,8 @@ function AnalysisDashboard({ submissions }) {
         return (
           <div key={type} className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <BarChart3 className="text-blue-600" size={24} /> {type} Analysis
+              <h3 className="text-xl font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <BarChart3 className="text-blue-600 opacity-50" size={20} /> {type} Analysis
               </h3>
               <div className="flex gap-3">
                 <div className="bg-white dark:bg-slate-900 px-6 py-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
@@ -533,25 +645,44 @@ function AnalysisDashboard({ submissions }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ minHeight: 0 }}>
               <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm min-w-0">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Marks Trend</p>
-                <div className="h-64 w-full"><ResponsiveContainer width="99%" height="100%">
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="99%" height="100%">
                     <AreaChart data={data}>
-                      <defs><linearGradient id={`colorMarks-${type}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.2}/><stop offset="95%" stopColor="#2563eb" stopOpacity={0}/></linearGradient></defs>
+                      <defs>
+                        <linearGradient id={`colorMarks-${type}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="date" hide /><YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 'auto']} /><Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                      <XAxis dataKey="date" hide />
+                      <YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 'auto']} />
+                      <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
                       <Area type="monotone" dataKey="scorecard.marks" stroke="#2563eb" fillOpacity={1} fill={`url(#colorMarks-${type})`} strokeWidth={4} dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }} />
                     </AreaChart>
-                  </ResponsiveContainer></div>
+                  </ResponsiveContainer>
+                </div>
               </div>
+              
               <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm min-w-0">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Accuracy % Trend</p>
-                <div className="h-64 w-full"><ResponsiveContainer width="99%" height="100%">
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="99%" height="100%">
                     <AreaChart data={data}>
-                      <defs><linearGradient id={`colorAcc-${type}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient></defs>
+                      <defs>
+                        <linearGradient id={`colorAcc-${type}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="date" hide /><YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 100]} /><Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                      <XAxis dataKey="date" hide />
+                      <YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 100]} />
+                      <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
                       <Area type="monotone" dataKey="displayAccuracy" name="Accuracy %" stroke="#10b981" fillOpacity={1} fill={`url(#colorAcc-${type})`} strokeWidth={4} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} />
                     </AreaChart>
-                  </ResponsiveContainer></div>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>

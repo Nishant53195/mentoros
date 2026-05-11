@@ -78,13 +78,14 @@ export default function MentorLayout({ children }) {
             <item.icon size={20} />
             <span className="text-[10px] mt-1 font-medium">{item.name}</span>
           </button>
+          
         ))}
-      </nav>
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-  <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
+        <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors">
     <LogOut size={22} />
     {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
   </button>
+      </nav>
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
 </div>
 
       {/* MAIN CONTENT AREA */}

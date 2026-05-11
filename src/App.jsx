@@ -34,6 +34,7 @@ function App() {
       <Routes>
         {/* Core Auth Flow */}
         <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Navigate to="/" replace />}/>
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/waiting" element={<ProtectedRoute><Waiting /></ProtectedRoute>} />
         

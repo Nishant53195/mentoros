@@ -8,11 +8,14 @@ import Waiting from "./pages/Waiting";
 import Dashboard from "./pages/mentor/Dashboard";
 import Approvals from "./pages/mentor/Approvals";
 import Schedule from "./pages/mentor/Schedule";
+import EnglishCreator from "./pages/mentor/EnglishCreator";
 
 // Student Pages
 import StudentDashboard from "./pages/student/StudentDashboard";
 import DailyTasks from "./pages/student/DailyTasks";
 import StudentLayout from "./components/StudentLayout";
+
+import EnglishPractice from "./pages/student/EnglishPractice";
 
 // Temporary Placeholder for unbuilt pages
 const Placeholder = ({ title }) => (
@@ -37,7 +40,7 @@ function App() {
         <Route path="/mentor-dashboard" element={<Dashboard />} />
         <Route path="/mentor/approvals" element={<Approvals />} />
         <Route path="/mentor/schedule" element={<Schedule />} />
-        <Route path="/mentor/english" element={<Placeholder title="English Practice" />} />
+        <Route path="/mentor/english" element={<EnglishCreator />} />
         <Route path="/mentor/quant" element={<Placeholder title="Quant Practice" />} />
         <Route path="/mentor/analytics" element={<Placeholder title="Analytics" />} />
         <Route path="/mentor/profile" element={<Placeholder title="Profile" />} />
@@ -45,7 +48,7 @@ function App() {
         {/* Student Routes */}
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/student/tasks" element={<DailyTasks />} />
-        <Route path="/student/english" element={<Placeholder title="Daily English Practice" />} />
+        <Route path="/student/english" element={<EnglishPractice />} />
         <Route path="/student/quant" element={<Placeholder title="Quant Topic Practice" />} />
         <Route path="/student/analytics" element={<Placeholder title="My Analytics" />} />
         <Route path="/student/profile" element={<Placeholder title="My Profile" />} />

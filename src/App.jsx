@@ -10,12 +10,15 @@ import Dashboard from "./pages/mentor/Dashboard";
 import Approvals from "./pages/mentor/Approvals";
 import Schedule from "./pages/mentor/Schedule";
 import EnglishCreator from "./pages/mentor/EnglishCreator";
+import QuantCreator from "./pages/mentor/QuantCreator";
+
 
 // Student Pages
 import StudentDashboard from "./pages/student/StudentDashboard";
 import DailyTasks from "./pages/student/DailyTasks";
 import StudentLayout from "./components/StudentLayout";
 import MentorLayout from "./components/MentorLayout";
+import QuantPractice from "./pages/student/QuantPractice";
 
 import EnglishPractice from "./pages/student/EnglishPractice";
 
@@ -44,7 +47,7 @@ function App() {
         <Route path="/mentor/approvals" element={<ProtectedRoute adminOnly={true}><Approvals /></ProtectedRoute>} />
         <Route path="/mentor/schedule" element={<ProtectedRoute adminOnly={true}><Schedule /></ProtectedRoute>} />
         <Route path="/mentor/english" element={<ProtectedRoute adminOnly={true}><EnglishCreator /></ProtectedRoute>} />
-        <Route path="/mentor/quant" element={<Placeholder title="Quant Practice" Layout={MentorLayout} />} />
+        <Route path="/mentor/quant" element={<ProtectedRoute adminOnly={true}><QuantCreator /></ProtectedRoute>} />
         <Route path="/mentor/analytics" element={<Placeholder title="Analytics" Layout={MentorLayout} />} />
         <Route path="/mentor/profile" element={<Placeholder title="Profile" Layout={MentorLayout} />} />
         
@@ -53,7 +56,7 @@ function App() {
         <Route path="/student-dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
         <Route path="/student/tasks" element={<ProtectedRoute><DailyTasks /></ProtectedRoute>} />
         <Route path="/student/english" element={<ProtectedRoute><EnglishPractice /></ProtectedRoute>} />
-        <Route path="/student/quant" element={<Placeholder title="Quant Topic Practice" />} />
+        <Route path="/student/quant" element={<ProtectedRoute><QuantPractice /></ProtectedRoute>} />
         <Route path="/student/analytics" element={<Placeholder title="My Analytics" />} />
         <Route path="/student/profile" element={<Placeholder title="My Profile" />} />
       </Routes>

@@ -155,6 +155,7 @@ export default function EnglishCreator() {
       />
     </div>
   ))}
+</div>
   {/* Add this below the grid of options */}
 <div className="mt-6 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-800">
   <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -171,7 +172,6 @@ export default function EnglishCreator() {
     placeholder="Explain why the correct answer is right..."
     rows={3}
   />
-</div>
 </div>
             </div>
             <Button onClick={saveTest} className="w-full h-16 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 text-white font-black text-lg shadow-xl">Push Universal Test</Button>

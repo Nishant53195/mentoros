@@ -1,15 +1,21 @@
 // src/pages/student/StudentDashboard.jsx
 import { useEffect, useState } from "react";
 import { auth, db } from "@/firebase/config";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import StudentLayout from "@/components/StudentLayout";
-import { Zap, ArrowRight, Target } from "lucide-react";
+import { Zap, ArrowRight, Target, Radio, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StudentDashboard() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
+  // Ticker State
+  const [notices, setNotices] = useState([]);
+  const [currentNoticeIdx, setCurrentNoticeIdx] = useState(0);
+
+  // 1. Fetch User Data
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -17,19 +23,127 @@ export default function StudentDashboard() {
     return () => unsub();
   }, []);
 
+  // 2. The Universal LED Ticker Engine
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user || !userData) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // A. Fetch Custom Mentor Broadcasts
+    const unsubNotices = onSnapshot(collection(db, "notices"), (snap) => {
+      const fetched = snap.docs.map(d => d.data())
+        .filter(n => n.createdAt && n.createdAt.startsWith(today)); // Only show today's broadcasts
+
+      const customNotices = fetched.filter(n => {
+        if (n.audience === "all") return true;
+        if (n.audience === "student" && n.studentId === user.uid) return true;
+        if (n.audience === "exam_year") {
+           // Check if user's targets match the broadcast target
+           const userExamYears = userData.targetExams?.map(exam => `${exam}-${userData.targetYears?.[exam]}`) || [];
+           return userExamYears.includes(`${n.exam}-${n.year}`);
+        }
+        return false;
+      }).map(n => ({ text: `MENTOR ALERT: ${n.text}`, color: "text-amber-400", path: "#" }));
+
+      // B. Fetch Automated English Tests
+      const qEng = query(collection(db, "english_tests"), where("date", "==", today));
+      const unsubEng = onSnapshot(qEng, (eSnap) => {
+         const engNotices = eSnap.docs.map(d => ({
+           text: `New English ${d.data().type} Challenge is LIVE!`,
+           path: "/student/english",
+           color: "text-blue-400"
+         }));
+
+         // C. Fetch Automated Quant Tests
+         const unsubQuant = onSnapshot(collection(db, "quant_tests"), (qSnap) => {
+           const qNotices = qSnap.docs.map(d => d.data())
+             .filter(d => d.createdAt && d.createdAt.startsWith(today))
+             .map(d => ({
+               text: `New Quant Drill: ${d.chapter} - ${d.title}`,
+               path: "/student/quant",
+               color: "text-emerald-400"
+             }));
+
+           // Combine all alerts into the ticker pool
+           setNotices([...customNotices, ...engNotices, ...qNotices]);
+         });
+         return () => unsubQuant();
+      });
+      return () => unsubEng();
+    });
+
+    return () => unsubNotices();
+  }, [userData]);
+
+  // 3. Ticker Rotation Logic (Every 4 seconds)
+  useEffect(() => {
+    if (notices.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentNoticeIdx((prev) => (prev + 1) % notices.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [notices]);
+
   return (
     <StudentLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-500">
         
+        {/* --- THE LED NOTICE BOARD --- */}
+        {notices.length > 0 && notices[currentNoticeIdx] && (
+          <div 
+            className="relative overflow-hidden bg-slate-950 rounded-2xl border border-slate-800 p-1 shadow-[0_0_20px_rgba(59,130,246,0.15)] group cursor-pointer" 
+            onClick={() => notices[currentNoticeIdx].path !== "#" && navigate(notices[currentNoticeIdx].path)}
+          >
+            {/* Glowing background effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-emerald-600/10 animate-pulse"></div>
+            
+            <div className="relative z-10 flex items-center gap-3 w-full px-4 py-3">
+              {/* Pulsing Red Dot */}
+              <div className="flex items-center justify-center shrink-0">
+                 <div className="h-2.5 w-2.5 bg-red-500 rounded-full animate-ping absolute"></div>
+                 <div className="h-2.5 w-2.5 bg-red-500 rounded-full relative"></div>
+              </div>
+              
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-red-500 shrink-0 flex items-center gap-1.5">
+                <Radio size={14} className="hidden sm:block" /> LIVE
+              </span>
+              
+              <div className="h-5 w-[2px] bg-slate-800 mx-1 sm:mx-3 shrink-0 rounded-full"></div>
+              
+              {/* Animated Text Flipper */}
+              <div className="flex-1 overflow-hidden h-6 relative flex items-center">
+                 <AnimatePresence mode="wait">
+                   <motion.div
+                     key={currentNoticeIdx}
+                     initial={{ y: 20, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     exit={{ y: -20, opacity: 0 }}
+                     transition={{ duration: 0.3, ease: "easeInOut" }}
+                     className={`font-mono text-xs sm:text-sm font-bold uppercase tracking-wide truncate ${notices[currentNoticeIdx].color}`}
+                   >
+                     {notices[currentNoticeIdx].text}
+                   </motion.div>
+                 </AnimatePresence>
+              </div>
+
+              {notices[currentNoticeIdx].path !== "#" && (
+                <div className="shrink-0 text-slate-500 group-hover:text-white transition-colors">
+                   <ArrowRight size={16} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* COMPACT HERO SECTION */}
         <div className="bg-slate-900 dark:bg-blue-950 rounded-[2rem] p-6 lg:p-8 text-white relative overflow-hidden shadow-xl border border-slate-800">
-          {/* Decorative Blur - Moved further right to avoid overlapping text */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/30 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none"></div>
           
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-black mb-1 text-white tracking-tight">
-                Welcome, {userData?.name}!
+              <h1 className="text-2xl lg:text-3xl font-black mb-1 text-white tracking-tight flex items-center gap-2">
+                Welcome, {userData?.name?.split(" ")[0]}! <Sparkles className="text-yellow-400" size={24}/>
               </h1>
               <p className="text-blue-200/80 font-medium text-sm lg:text-base">
                 Your road to selection starts with today's tasks.

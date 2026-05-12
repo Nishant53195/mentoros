@@ -1,16 +1,24 @@
 // src/pages/mentor/Dashboard.jsx
 import { useState, useEffect } from "react";
 import { db } from "@/firebase/config";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, setDoc, onSnapshot, query, where } from "firebase/firestore";
 import MentorLayout from "@/components/MentorLayout";
-import { Users, UserPlus, CheckCircle, Target } from "lucide-react";
+import { Users, UserPlus, CheckCircle, Target, Radio, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0 });
   const [matrixData, setMatrixData] = useState({ ssc: [], banking: [] });
+  const [studentsList, setStudentsList] = useState([]);
+
+  // Broadcast State
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [audience, setAudience] = useState("all"); // all, exam_year, student
+  const [targetStudent, setTargetStudent] = useState("");
+  const [targetExam, setTargetExam] = useState("SSC");
+  const [targetYear, setTargetYear] = useState("2026");
 
   useEffect(() => {
-    // 1. Stats Counter
     const unsubUsers = onSnapshot(query(collection(db, "users"), where("role", "==", "student")), (usersSnap) => {
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
@@ -20,7 +28,9 @@ export default function Dashboard() {
         approved: users.filter(d => d.status === "approved").length
       });
 
-      // 2. Real-time Matrix Engine
+      // Save approved students for the broadcast dropdown
+      setStudentsList(users.filter(u => u.status === "approved"));
+
       const today = new Date().toISOString().split('T')[0];
       const unsubSchedules = onSnapshot(query(collection(db, "schedules"), where("date", "==", today)), (schedSnap) => {
         const schedules = schedSnap.docs.map(d => d.data());
@@ -62,6 +72,27 @@ export default function Dashboard() {
     return () => unsubUsers();
   }, []);
 
+  const handleSendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return alert("Message cannot be empty.");
+    if (audience === "student" && !targetStudent) return alert("Select a student.");
+
+    const noticeId = `NOTICE-${Date.now()}`;
+    try {
+      await setDoc(doc(db, "notices", noticeId), {
+        text: broadcastMsg,
+        audience,
+        studentId: targetStudent,
+        exam: targetExam,
+        year: targetYear,
+        createdAt: new Date().toISOString()
+      });
+      alert("Broadcast sent successfully to Student Dashboards!");
+      setBroadcastMsg(""); // Reset field
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+    }
+  };
+
   const cards = [
     { title: "Total Students", value: stats.total, icon: Users, color: "bg-blue-500", description: "Registered accounts" },
     { title: "Pending Approvals", value: stats.pending, icon: UserPlus, color: "bg-amber-500", description: "Waiting for access", pulse: stats.pending > 0 },
@@ -94,6 +125,72 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* --- BROADCAST CENTER --- */}
+        <div className="bg-slate-950 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row gap-8">
+            <div className="flex-1 space-y-4">
+              <h3 className="text-xl font-black flex items-center gap-3 text-amber-400">
+                <Radio size={24} className="animate-pulse" /> LED Broadcast Center
+              </h3>
+              <p className="text-slate-400 text-sm font-medium">Send real-time scrolling alerts directly to student dashboards.</p>
+              <textarea 
+                value={broadcastMsg}
+                onChange={(e) => setBroadcastMsg(e.target.value)}
+                placeholder="Type your alert here..."
+                className="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm font-bold text-white resize-none outline-none focus:border-amber-500/50 transition-colors"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end space-y-4">
+               <div>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Target Audience</label>
+                 <select 
+                   value={audience} 
+                   onChange={(e) => setAudience(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                 >
+                   <option value="all">All Active Students</option>
+                   <option value="exam_year">Specific Exam & Year Group</option>
+                   <option value="student">One Specific Student</option>
+                 </select>
+               </div>
+
+               {/* Dynamic Dropdowns based on Audience Selection */}
+               {audience === "student" && (
+                 <select 
+                   value={targetStudent} 
+                   onChange={(e) => setTargetStudent(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm font-bold outline-none text-blue-400"
+                 >
+                   <option value="">-- Select Student --</option>
+                   {studentsList.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
+                 </select>
+               )}
+
+               {audience === "exam_year" && (
+                 <div className="flex gap-2">
+                   <select value={targetExam} onChange={(e) => setTargetExam(e.target.value)} className="w-1/2 bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm font-bold outline-none text-purple-400">
+                     <option value="SSC">SSC</option>
+                     <option value="Banking">Banking</option>
+                   </select>
+                   <select value={targetYear} onChange={(e) => setTargetYear(e.target.value)} className="w-1/2 bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm font-bold outline-none text-emerald-400">
+                     <option value="2025">2025</option>
+                     <option value="2026">2026</option>
+                     <option value="2027">2027</option>
+                   </select>
+                 </div>
+               )}
+
+               <Button onClick={handleSendBroadcast} className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black h-12 rounded-xl flex items-center gap-2 mt-2">
+                 <Send size={18} /> Broadcast Now
+               </Button>
+            </div>
+          </div>
         </div>
 
         {/* --- LIVE MATRIX --- */}

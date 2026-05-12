@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Plus, Trash2, Save, ChevronLeft, ChevronRight, 
   Check, Edit3, Calendar, BarChart3, Settings2, 
-  FileText, CheckCircle, History, User, Target 
+  FileText, CheckCircle, History, User, Target, Upload 
 } from "lucide-react";
 
 export default function EnglishCreator() {
@@ -15,7 +15,6 @@ export default function EnglishCreator() {
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
-  // --- UNIVERSAL STATE ---
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState("RC");
   const [passage, setPassage] = useState("");
@@ -40,19 +39,18 @@ export default function EnglishCreator() {
   }, []);
 
   const saveTest = async () => {
-  // New ID includes Type so they don't overwrite each other
-  const docId = `${date}-${type}`; 
-  try {
-    await setDoc(doc(db, "english_tests", docId), {
-      date, 
-      type, 
-      passage, 
-      questions,
-      createdAt: new Date().toISOString()
-    });
-    alert(`${type} Test Synced Successfully!`);
-  } catch (e) { console.error("Save Error:", e); }
-};
+    const docId = `${date}-${type}`; 
+    try {
+      await setDoc(doc(db, "english_tests", docId), {
+        date, 
+        type, 
+        passage, 
+        questions,
+        createdAt: new Date().toISOString()
+      });
+      alert(`${type} Test Synced Successfully!`);
+    } catch (e) { console.error("Save Error:", e); }
+  };
 
   const loadForEdit = (test) => {
     setDate(test.date);
@@ -64,11 +62,33 @@ export default function EnglishCreator() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Helper to get stats for a specific test
+  // Bulk JSON Import
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        if (json.passage) setPassage(json.passage);
+        if (json.questions && Array.isArray(json.questions)) {
+          setQuestions(json.questions);
+          setCurrentIdx(0);
+          alert("Imported successfully! Review before syncing.");
+        } else {
+          alert("Invalid format. Please make sure the JSON includes a 'questions' array.");
+        }
+      } catch(err) {
+        alert("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   const getActiveTestDetails = () => {
     const test = savedTests.find(t => t.id === selectedTestId);
     if (!test) return null;
-    // Submissions are linked by date in the universal setup
     const testSubs = submissions.filter(s => s.date === test.date);
     return { test, testSubs };
   };
@@ -79,7 +99,6 @@ export default function EnglishCreator() {
     <MentorLayout>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         
-        {/* TOP NAVIGATION CHIPS */}
         <div className="flex justify-center">
           <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl flex gap-1 border border-slate-200 dark:border-slate-800 shadow-sm w-full max-w-md">
             {["create", "manage", "analysis"].map((tab) => (
@@ -96,7 +115,6 @@ export default function EnglishCreator() {
           </div>
         </div>
 
-        {/* 1. CREATE SECTION */}
         {activeTab === "create" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -124,61 +142,66 @@ export default function EnglishCreator() {
                    <p className="text-lg font-black text-slate-900 dark:text-white">{currentIdx + 1} / {questions.length}</p>
                    <button disabled={currentIdx === questions.length - 1} onClick={() => setCurrentIdx(currentIdx + 1)} className="p-2 rounded-full bg-white dark:bg-slate-700 shadow-sm disabled:opacity-30"><ChevronRight size={20} /></button>
                 </div>
-                <Button onClick={() => setQuestions([...questions, { questionText: "", options: ["","","","",""], correctAnswer: 0, explanation: "" }])} className="bg-blue-600 text-white rounded-xl px-4 py-2 text-xs font-bold">+ Add Question</Button>
+                <div className="flex items-center gap-2">
+                  <label className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2 transition-colors">
+                    <Upload size={14} /> Import JSON
+                    <input type="file" accept=".json" hidden onChange={handleFileUpload} />
+                  </label>
+                  <Button onClick={() => setQuestions([...questions, { questionText: "", options: ["","","","",""], correctAnswer: 0, explanation: "" }])} className="bg-blue-600 text-white rounded-xl px-4 py-2 text-xs font-bold">+ Add Question</Button>
+                </div>
               </div>
-              {/* UPDATED: Question Text as Textarea */}
-<textarea 
-  value={questions[currentIdx].questionText} 
-  onChange={(e) => { const q = [...questions]; q[currentIdx].questionText = e.target.value; setQuestions(q); }} 
-  className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold text-slate-900 dark:text-white resize-none" 
-  placeholder="Type your question here (multi-line supported)..."
-  rows={3}
-/>
+              
+              <textarea 
+                value={questions[currentIdx].questionText} 
+                onChange={(e) => { const q = [...questions]; q[currentIdx].questionText = e.target.value; setQuestions(q); }} 
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold text-slate-900 dark:text-white resize-none" 
+                placeholder="Type your question here (multi-line supported)..."
+                rows={3}
+              />
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-  {questions[currentIdx].options.map((opt, oIdx) => (
-    <div key={oIdx} className={`flex items-start gap-3 p-3 rounded-2xl border-2 transition-all ${questions[currentIdx].correctAnswer === oIdx ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-slate-50 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30'}`}>
-      <button 
-        onClick={() => { const q = [...questions]; q[currentIdx].correctAnswer = oIdx; setQuestions(q); }} 
-        className={`mt-2 w-6 h-6 shrink-0 rounded-full border-2 ${questions[currentIdx].correctAnswer === oIdx ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}`}
-      >
-        {questions[currentIdx].correctAnswer === oIdx && <Check size={12}/>}
-      </button>
-      
-      {/* UPDATED: Options as Textarea */}
-      <textarea 
-        value={opt} 
-        onChange={(e) => { const q = [...questions]; q[currentIdx].options[oIdx] = e.target.value; setQuestions(q); }} 
-        className="bg-transparent border-none text-sm font-bold w-full outline-none dark:text-white resize-none py-1" 
-        placeholder={`Option ${String.fromCharCode(65+oIdx)}`}
-        rows={2}
-      />
-    </div>
-  ))}
-</div>
-  {/* Add this below the grid of options */}
-<div className="mt-6 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-800">
-  <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-    <Edit3 size={14} /> Mentor's Explanation
-  </label>
-  <textarea 
-    value={questions[currentIdx].explanation} 
-    onChange={(e) => { 
-      const q = [...questions]; 
-      q[currentIdx].explanation = e.target.value; 
-      setQuestions(q); 
-    }} 
-    className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-none text-xs font-bold text-slate-700 dark:text-slate-300 resize-none shadow-inner" 
-    placeholder="Explain why the correct answer is right..."
-    rows={3}
-  />
-</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+                {questions[currentIdx].options.map((opt, oIdx) => (
+                  <div key={oIdx} className={`flex items-start gap-3 p-3 rounded-2xl border-2 transition-all ${questions[currentIdx].correctAnswer === oIdx ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-slate-50 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30'}`}>
+                    <button 
+                      onClick={() => { const q = [...questions]; q[currentIdx].correctAnswer = oIdx; setQuestions(q); }} 
+                      className={`mt-2 w-6 h-6 shrink-0 rounded-full border-2 ${questions[currentIdx].correctAnswer === oIdx ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}`}
+                    >
+                      {questions[currentIdx].correctAnswer === oIdx && <Check size={12}/>}
+                    </button>
+                    
+                    <textarea 
+                      value={opt} 
+                      onChange={(e) => { const q = [...questions]; q[currentIdx].options[oIdx] = e.target.value; setQuestions(q); }} 
+                      className="bg-transparent border-none text-sm font-bold w-full outline-none dark:text-white resize-none py-1" 
+                      placeholder={`Option ${String.fromCharCode(65+oIdx)}`}
+                      rows={2}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-2 mx-4 mb-4 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-800">
+                <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Edit3 size={14} /> Mentor's Explanation
+                </label>
+                <textarea 
+                  value={questions[currentIdx].explanation} 
+                  onChange={(e) => { 
+                    const q = [...questions]; 
+                    q[currentIdx].explanation = e.target.value; 
+                    setQuestions(q); 
+                  }} 
+                  className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-none text-xs font-bold text-slate-700 dark:text-slate-300 resize-none shadow-inner" 
+                  placeholder="Explain why the correct answer is right..."
+                  rows={3}
+                />
+              </div>
             </div>
             <Button onClick={saveTest} className="w-full h-16 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 text-white font-black text-lg shadow-xl">Push Universal Test</Button>
           </div>
         )}
 
-        {/* 2. MANAGE SECTION */}
+        {/* ... Manage and Analysis sections remain untouched below this ... */}
         {activeTab === "manage" && (
           <div className="space-y-10 animate-in fade-in duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -199,11 +222,9 @@ export default function EnglishCreator() {
           </div>
         )}
 
-        {/* 3. ANALYSIS SECTION (Overhauled) */}
         {activeTab === "analysis" && (
           <div className="space-y-8 animate-in fade-in duration-500">
             {!selectedTestId ? (
-              /* LIST VIEW: Select a practice */
               <div className="space-y-12">
                 {["RC", "Cloze"].map(sectionType => (
                   <div key={sectionType} className="space-y-4">
@@ -234,7 +255,6 @@ export default function EnglishCreator() {
                 ))}
               </div>
             ) : (
-              /* DRILL-DOWN VIEW */
               <div className="space-y-10">
                 <div className="flex items-center gap-4">
                   <button onClick={() => { setSelectedTestId(null); setSelectedStudentId(null); }} className="p-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50">
@@ -246,7 +266,6 @@ export default function EnglishCreator() {
                   </div>
                 </div>
 
-                {/* Section 1: All Students Overview */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                   <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                     <User size={18} className="text-blue-600" />
@@ -279,7 +298,6 @@ export default function EnglishCreator() {
                   </table>
                 </div>
 
-                {/* Section 2: Question Accuracy % */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                   <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-8">
                     <Settings2 size={18} className="text-blue-600" /> Accuracy Breakdown
@@ -303,7 +321,6 @@ export default function EnglishCreator() {
                   </div>
                 </div>
 
-                {/* Section 3: Individual Review */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
                     <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2">

@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { 
   Plus, Trash2, ChevronLeft, ChevronRight, 
   Check, Edit3, Settings2, FileText, CheckCircle, 
-  User, Calculator, Clock, Folder
+  User, Calculator, Clock, Folder, Upload
 } from "lucide-react";
-// LaTeX Renderer (Ensure you npm install react-katex katex)
 import 'katex/dist/katex.min.css';
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 
 const CHAPTERS = [
   "Number System", "Percentage", "Ratio & Proportion", "Square roots", "Averages", 
@@ -21,12 +20,20 @@ const CHAPTERS = [
   "Simplification & Approximation", "Number Series", "Data Interpretation", "Caselet DI", "Quadratic Equation"
 ];
 
-// Helper to render text with inline math separated by $
+// Anti-crash LaTeX renderer
 const renderTextWithMath = (text) => {
   if (!text) return null;
   const parts = text.split('$');
   return parts.map((part, index) => {
-    if (index % 2 !== 0) return <InlineMath key={index} math={part} />;
+    if (index % 2 !== 0) {
+      return (
+        <InlineMath 
+          key={index} 
+          math={part} 
+          renderError={(error) => <span className="text-red-500 font-mono bg-red-50 px-1 rounded">{part}</span>} 
+        />
+      );
+    }
     return <span key={index}>{part}</span>;
   });
 };
@@ -37,7 +44,6 @@ export default function QuantCreator() {
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
-  // --- CREATE STATE ---
   const [chapter, setChapter] = useState(CHAPTERS[0]);
   const [title, setTitle] = useState("");
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -45,7 +51,6 @@ export default function QuantCreator() {
     { questionText: "", options: ["", "", "", ""], correctAnswer: 0, explanation: "" }
   ]);
 
-  // --- DATA STATE ---
   const [savedTests, setSavedTests] = useState([]);
   const [submissions, setSubmissions] = useState([]);
 
@@ -75,20 +80,41 @@ export default function QuantCreator() {
     } catch (e) { console.error("Save Error:", e); }
   };
 
-  const activeTestDetails = () => {
+  // Handle Bulk JSON Upload
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        if (Array.isArray(json)) {
+          setQuestions(json);
+          setCurrentIdx(0);
+          alert("Imported successfully! Review before publishing.");
+        } else {
+          alert("Invalid format: Quant JSON must be an array of questions.");
+        }
+      } catch(err) {
+        alert("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // Reset input
+  };
+
+  const details = () => {
     const test = savedTests.find(t => t.id === selectedTestId);
     if (!test) return null;
     const testSubs = submissions.filter(s => s.testId === test.id);
     return { test, testSubs };
   };
 
-  const details = activeTestDetails();
+  const activeTest = details();
 
   return (
     <MentorLayout>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
-        
-        {/* TOP NAVIGATION CHIPS */}
         <div className="flex justify-center">
           <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl flex gap-1 border border-slate-200 dark:border-slate-800 shadow-sm w-full max-w-md">
             {["create", "manage"].map((tab) => (
@@ -105,7 +131,6 @@ export default function QuantCreator() {
           </div>
         </div>
 
-        {/* 1. CREATE SECTION */}
         {activeTab === "create" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -128,7 +153,13 @@ export default function QuantCreator() {
                    <p className="text-lg font-black text-slate-900 dark:text-white">Q {currentIdx + 1} / {questions.length}</p>
                    <button disabled={currentIdx === questions.length - 1} onClick={() => setCurrentIdx(currentIdx + 1)} className="p-2 rounded-full bg-white dark:bg-slate-700 shadow-sm disabled:opacity-30"><ChevronRight size={20} /></button>
                 </div>
-                <Button onClick={() => setQuestions([...questions, { questionText: "", options: ["","","",""], correctAnswer: 0, explanation: "" }])} className="bg-blue-600 text-white rounded-xl px-4 py-2 text-xs font-bold">+ Add Question</Button>
+                <div className="flex items-center gap-2">
+                  <label className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2 transition-colors">
+                    <Upload size={14} /> Import JSON
+                    <input type="file" accept=".json" hidden onChange={handleFileUpload} />
+                  </label>
+                  <Button onClick={() => setQuestions([...questions, { questionText: "", options: ["","","",""], correctAnswer: 0, explanation: "" }])} className="bg-blue-600 text-white rounded-xl px-4 py-2 text-xs font-bold">+ Add Question</Button>
+                </div>
               </div>
               
               <div className="p-6 space-y-6">
@@ -141,7 +172,6 @@ export default function QuantCreator() {
                     placeholder="e.g. Find the roots of $x^2 - 5x + 6 = 0$"
                     rows={3}
                   />
-                  {/* Live Math Preview */}
                   {questions[currentIdx].questionText && (
                      <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl text-sm font-bold text-blue-800 dark:text-blue-200">
                        <span className="text-[9px] uppercase text-blue-400 block mb-1">Preview</span>
@@ -191,12 +221,12 @@ export default function QuantCreator() {
           </div>
         )}
 
-        {/* 2. MANAGE SECTION */}
+        {/* ... Manage and Analysis sections remain exactly the same ... */}
         {activeTab === "manage" && !selectedChapter && !selectedTestId && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in">
              {CHAPTERS.map(chap => {
                const count = savedTests.filter(t => t.chapter === chap).length;
-               if (count === 0) return null; // Only show active folders
+               if (count === 0) return null;
                return (
                  <div key={chap} onClick={() => setSelectedChapter(chap)} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500 cursor-pointer transition-all group flex flex-col items-center text-center">
                     <Folder className="text-blue-200 dark:text-blue-900 mb-3 group-hover:text-blue-500 transition-colors" size={40}/>
@@ -208,14 +238,12 @@ export default function QuantCreator() {
           </div>
         )}
 
-        {/* 2A. CHAPTER DRILL-DOWN */}
         {activeTab === "manage" && selectedChapter && !selectedTestId && (
           <div className="space-y-6 animate-in slide-in-from-right-4">
              <div className="flex items-center gap-4 mb-8">
                <button onClick={() => setSelectedChapter(null)} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm"><ChevronLeft size={20}/></button>
                <h2 className="text-2xl font-black text-slate-900 dark:text-white">{selectedChapter}</h2>
              </div>
-             
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {savedTests.filter(t => t.chapter === selectedChapter).map(test => (
                  <div key={test.id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
@@ -233,18 +261,16 @@ export default function QuantCreator() {
           </div>
         )}
 
-        {/* 3. TEST ANALYSIS SECTION */}
-        {activeTab === "manage" && selectedTestId && (
+        {activeTab === "manage" && selectedTestId && activeTest && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4">
             <div className="flex items-center gap-4">
                <button onClick={() => { setSelectedTestId(null); setSelectedStudentId(null); }} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm"><ChevronLeft size={20}/></button>
                <div>
-                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase">{details.test.title}</h2>
-                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{details.test.chapter}</p>
+                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase">{activeTest.test.title}</h2>
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{activeTest.test.chapter}</p>
                </div>
             </div>
 
-            {/* Overall Question Stats */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-6">
                 <Settings2 size={18} className="text-blue-600" /> Question Performance
@@ -260,9 +286,9 @@ export default function QuantCreator() {
                     </tr>
                   </thead>
                   <tbody>
-                    {details.test.questions.map((q, idx) => {
+                    {activeTest.test.questions.map((q, idx) => {
                       let correct = 0, skipped = 0, totalTime = 0, attempted = 0;
-                      details.testSubs.forEach(sub => {
+                      activeTest.testSubs.forEach(sub => {
                         const qData = sub.perQuestionData?.[idx];
                         if (!qData) skipped++;
                         else {
@@ -288,7 +314,6 @@ export default function QuantCreator() {
               </div>
             </div>
 
-            {/* Individual Student Drill-down */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
                 <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2">
@@ -300,17 +325,16 @@ export default function QuantCreator() {
                   value={selectedStudentId || ""}
                 >
                   <option value="">Select Student</option>
-                  {details.testSubs.map(s => <option key={s.userId} value={s.userId}>{s.userName}</option>)}
+                  {activeTest.testSubs.map(s => <option key={s.userId} value={s.userId}>{s.userName}</option>)}
                 </select>
               </div>
 
               {selectedStudentId && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {details.test.questions.map((q, idx) => {
-                    const sub = details.testSubs.find(s => s.userId === selectedStudentId);
+                  {activeTest.test.questions.map((q, idx) => {
+                    const sub = activeTest.testSubs.find(s => s.userId === selectedStudentId);
                     const qData = sub.perQuestionData?.[idx];
                     const isCorrect = qData?.isCorrect;
-                    
                     return (
                       <div key={idx} className={`p-4 rounded-2xl border ${!qData ? 'bg-slate-50 border-slate-100' : isCorrect ? 'bg-emerald-50/50 border-emerald-100' : 'bg-red-50/50 border-red-100'}`}>
                          <div className="flex justify-between items-center mb-3">

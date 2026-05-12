@@ -40,7 +40,7 @@ export default function Login() {
       const loggedInUser = result.user;
 
       if (loggedInUser.email === MENTOR_EMAIL) {
-        navigate("/mentor-dashboard");
+        navigate("/mentor-dashboard", { replace: true }); // <--- ADDED REPLACE
         return;
       }
 
@@ -48,13 +48,13 @@ export default function Login() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        navigate("/onboarding");
+        navigate("/onboarding", { replace: true }); // <--- ADDED REPLACE
       } else {
         const userData = userDocSnap.data();
         if (userData.status === "pending") {
-          navigate("/waiting");
+          navigate("/waiting", { replace: true }); // <--- ADDED REPLACE
         } else {
-          navigate("/student-dashboard");
+          navigate("/student-dashboard", { replace: true }); // <--- ADDED REPLACE
         }
       }
     } catch (error) {

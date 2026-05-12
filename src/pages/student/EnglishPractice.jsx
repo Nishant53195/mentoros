@@ -139,24 +139,33 @@ export default function EnglishPractice() {
 
               <div className="space-y-3 pb-24 lg:pb-0">
                 {test.questions[currentQ].options.map((opt, i) => (
-                  <label 
+                  <div 
                     key={i} 
-                    className={`flex items-start gap-4 p-4 cursor-pointer border-2 rounded-2xl transition-all ${
+                    onClick={() => {
+                      if (answers[currentQ] === i) {
+                        // Uncheck if already selected
+                        const newAnswers = { ...answers };
+                        delete newAnswers[currentQ];
+                        setAnswers(newAnswers);
+                      } else {
+                        // Check new answer
+                        setAnswers({...answers, [currentQ]: i});
+                      }
+                    }}
+                    className={`flex items-start gap-4 p-4 cursor-pointer border-2 rounded-2xl transition-all select-none ${
                       answers[currentQ] === i 
                       ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-500/5' 
-                      : 'border-white dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm'
+                      : 'border-white dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-blue-200'
                     }`}
                   >
-                    <input 
-                      type="radio" 
-                      checked={answers[currentQ] === i} 
-                      onChange={() => setAnswers({...answers, [currentQ]: i})} 
-                      className="w-5 h-5 mt-0.5 accent-blue-600 shrink-0" 
-                    />
+                    {/* Replaced native radio with custom div to prevent default radio stuck behavior */}
+                    <div className={`w-5 h-5 mt-0.5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${answers[currentQ] === i ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
+                       {answers[currentQ] === i && <div className="w-2 h-2 bg-white rounded-full" />}
+                    </div>
                     <span className="text-sm lg:text-base font-bold text-slate-700 dark:text-slate-300 whitespace-pre-line leading-snug">
                       {opt}
                     </span>
-                  </label>
+                  </div>
                 ))}
               </div>
             </div>

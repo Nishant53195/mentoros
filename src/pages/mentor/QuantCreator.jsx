@@ -66,7 +66,11 @@ export default function QuantCreator() {
 
   const saveTest = async () => {
     if (!title) return alert("Please enter a title/sub-topic.");
-    const docId = `QUANT-${chapter.replace(/\s+/g, '-')}-${Date.now()}`; 
+    
+    // Check if we are editing an existing test or making a new one
+    // Using existing title to keep the ID consistent if possible, otherwise generate a new one
+    const docId = `QUANT-${chapter.replace(/\s+/g, '-')}-${title.replace(/\s+/g, '-')}`; 
+    
     try {
       await setDoc(doc(db, "quant_tests", docId), {
         chapter, 
@@ -80,7 +84,16 @@ export default function QuantCreator() {
     } catch (e) { console.error("Save Error:", e); }
   };
 
-  // Handle Bulk JSON Upload
+  // --- NEW EDIT FUNCTION ---
+  const loadForEdit = (test) => {
+    setChapter(test.chapter);
+    setTitle(test.title);
+    setQuestions(test.questions);
+    setCurrentIdx(0);
+    setActiveTab("create");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -100,7 +113,7 @@ export default function QuantCreator() {
       }
     };
     reader.readAsText(file);
-    e.target.value = ""; // Reset input
+    e.target.value = ""; 
   };
 
   const details = () => {
@@ -221,7 +234,6 @@ export default function QuantCreator() {
           </div>
         )}
 
-        {/* ... Manage and Analysis sections remain exactly the same ... */}
         {activeTab === "manage" && !selectedChapter && !selectedTestId && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in">
              {CHAPTERS.map(chap => {
@@ -252,6 +264,9 @@ export default function QuantCreator() {
                       <p className="text-xs font-bold text-slate-400 mt-1">{test.questions.length} Questions</p>
                     </div>
                     <div className="flex gap-2">
+                       {/* --- EDIT BUTTON ADDED HERE --- */}
+                       <button onClick={() => loadForEdit(test)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all dark:text-white">Edit</button>
+                       
                        <Button onClick={() => setSelectedTestId(test.id)} className="bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold text-xs h-9">Analysis</Button>
                        <button onClick={async () => { if(window.confirm("Delete?")) await deleteDoc(doc(db, "quant_tests", test.id)) }} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={18}/></button>
                     </div>

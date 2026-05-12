@@ -173,9 +173,9 @@ export default function QuantPractice() {
            </div>
         </header>
 
-        {/* MAIN QUESTION AREA */}
+        {/* MAIN QUESTION AREA - Increased pb-48 for full scrollability */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
-           <div className="w-full max-w-3xl space-y-8 pb-32">
+           <div className="w-full max-w-3xl space-y-6 pb-48">
              
              {/* Reattempt Comparison Banner */}
              {mode === 'reattempt' && isAnswered && previousQData && (
@@ -185,32 +185,33 @@ export default function QuantPractice() {
                 </div>
              )}
 
-             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-relaxed">
+             {/* Smaller Question Text */}
+             <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-relaxed">
                {renderMath(q.questionText)}
              </h3>
 
-             <div className="space-y-4">
+             <div className="space-y-3">
                {q.options.map((opt, idx) => {
                  const isPicked = perQuestionData[currentQ]?.answer === idx;
                  const isCorrectAns = q.correctAnswer === idx;
                  
                  // Styling logic based on state
                  let boxStyle = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-blue-400 shadow-sm cursor-pointer";
-                 let icon = <span className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-blue-500 group-hover:border-blue-500">{String.fromCharCode(65 + idx)}</span>;
+                 let icon = <span className="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-blue-500 group-hover:border-blue-500">{String.fromCharCode(65 + idx)}</span>;
 
                  if (isAnswered || isReviewMode) {
                    boxStyle = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60 cursor-default"; // Default inactive
-                   icon = <span className="w-6 h-6 rounded-full border-2 border-slate-200 text-slate-300 flex items-center justify-center text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>;
+                   icon = <span className="w-5 h-5 rounded-full border-2 border-slate-200 text-slate-300 flex items-center justify-center text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>;
 
                    // Override if this is the correct answer
                    if (isCorrectAns) {
                      boxStyle = "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-400 dark:border-emerald-600 shadow-md ring-2 ring-emerald-500/20";
-                     icon = <CheckCircle2 className="text-emerald-500" size={24} />;
+                     icon = <CheckCircle2 className="text-emerald-500" size={20} />;
                    }
                    // Override if this was picked and is wrong
                    else if (isPicked && !isCorrectAns) {
                      boxStyle = "bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800";
-                     icon = <XCircle className="text-red-500" size={24} />;
+                     icon = <XCircle className="text-red-500" size={20} />;
                    }
                  }
 
@@ -218,10 +219,11 @@ export default function QuantPractice() {
                    <div 
                      key={idx} 
                      onClick={() => !isAnswered && !isReviewMode && handleAnswer(idx)}
-                     className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex items-start gap-4 group ${boxStyle}`}
+                     className={`p-3 sm:p-4 rounded-2xl border-2 transition-all flex items-start gap-3 group ${boxStyle}`}
                    >
                      <div className="mt-0.5 shrink-0">{icon}</div>
-                     <span className="text-base font-bold text-slate-700 dark:text-slate-200">{renderMath(opt)}</span>
+                     {/* Smaller Option Text */}
+                     <span className="text-sm font-bold text-slate-700 dark:text-slate-200 pt-0.5">{renderMath(opt)}</span>
                    </div>
                  );
                })}
@@ -229,7 +231,7 @@ export default function QuantPractice() {
 
              {/* INSTANT EXPLANATION REVEAL WITH TIMER FIX */}
              {(isAnswered || isReviewMode) && q.explanation && (
-               <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-[2rem] border border-blue-100 dark:border-blue-800/50 animate-in slide-in-from-bottom-4 mt-8">
+               <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-[2rem] border border-blue-100 dark:border-blue-800/50 animate-in slide-in-from-bottom-4 mt-6">
                  <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center justify-between">
                    <span>Mentor Explanation</span>
                    <span className="text-slate-500 bg-white dark:bg-slate-800 px-2 py-1 rounded">

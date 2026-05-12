@@ -5,7 +5,6 @@ import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import StudentLayout from "@/components/StudentLayout";
 import { Zap, ArrowRight, Target, Radio, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function StudentDashboard() {
   const [userData, setUserData] = useState(null);
@@ -13,7 +12,6 @@ export default function StudentDashboard() {
 
   // Ticker State
   const [notices, setNotices] = useState([]);
-  const [currentNoticeIdx, setCurrentNoticeIdx] = useState(0);
 
   // 1. Fetch User Data
   useEffect(() => {
@@ -76,62 +74,45 @@ export default function StudentDashboard() {
     return () => unsubNotices();
   }, [userData]);
 
-  // 3. Ticker Rotation Logic (Every 4 seconds)
-  useEffect(() => {
-    if (notices.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentNoticeIdx((prev) => (prev + 1) % notices.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [notices]);
-
   return (
     <StudentLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
         
-        {/* --- THE LED NOTICE BOARD --- */}
-        {notices.length > 0 && notices[currentNoticeIdx] && (
-          <div 
-            className="relative overflow-hidden bg-slate-950 rounded-2xl border border-slate-800 p-1 shadow-[0_0_20px_rgba(59,130,246,0.15)] group cursor-pointer" 
-            onClick={() => notices[currentNoticeIdx].path !== "#" && navigate(notices[currentNoticeIdx].path)}
-          >
+        {/* --- STATIC LED NOTICE BOARD --- */}
+        {notices.length > 0 && (
+          <div className="relative overflow-hidden bg-slate-950 rounded-2xl border border-slate-800 p-1 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
             {/* Glowing background effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-emerald-600/10 animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-emerald-600/10 opacity-70"></div>
             
-            <div className="relative z-10 flex items-center gap-3 w-full px-4 py-3">
-              {/* Pulsing Red Dot */}
-              <div className="flex items-center justify-center shrink-0">
-                 <div className="h-2.5 w-2.5 bg-red-500 rounded-full animate-ping absolute"></div>
-                 <div className="h-2.5 w-2.5 bg-red-500 rounded-full relative"></div>
-              </div>
-              
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-red-500 shrink-0 flex items-center gap-1.5">
-                <Radio size={14} className="hidden sm:block" /> LIVE
-              </span>
-              
-              <div className="h-5 w-[2px] bg-slate-800 mx-1 sm:mx-3 shrink-0 rounded-full"></div>
-              
-              {/* Animated Text Flipper */}
-              <div className="flex-1 overflow-hidden h-6 relative flex items-center">
-                 <AnimatePresence mode="wait">
-                   <motion.div
-                     key={currentNoticeIdx}
-                     initial={{ y: 20, opacity: 0 }}
-                     animate={{ y: 0, opacity: 1 }}
-                     exit={{ y: -20, opacity: 0 }}
-                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                     className={`font-mono text-xs sm:text-sm font-bold uppercase tracking-wide truncate ${notices[currentNoticeIdx].color}`}
-                   >
-                     {notices[currentNoticeIdx].text}
-                   </motion.div>
-                 </AnimatePresence>
+            <div className="relative z-10 flex flex-col w-full py-2">
+              <div className="px-4 pb-2 mb-2 border-b border-white/5 flex items-center gap-2">
+                <Radio size={14} className="text-red-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Live Updates</span>
               </div>
 
-              {notices[currentNoticeIdx].path !== "#" && (
-                <div className="shrink-0 text-slate-500 group-hover:text-white transition-colors">
-                   <ArrowRight size={16} />
+              {notices.map((notice, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => notice.path !== "#" && navigate(notice.path)}
+                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${notice.path !== "#" ? "cursor-pointer hover:bg-white/5 group" : ""}`}
+                >
+                  {/* Pulsing Red Dot for each list item */}
+                  <div className="flex items-center justify-center shrink-0">
+                     <div className="h-2 w-2 bg-red-500 rounded-full animate-ping absolute"></div>
+                     <div className="h-2 w-2 bg-red-500 rounded-full relative"></div>
+                  </div>
+                  
+                  <div className={`flex-1 font-mono text-xs sm:text-sm font-bold uppercase tracking-wide truncate ${notice.color}`}>
+                    {notice.text}
+                  </div>
+
+                  {notice.path !== "#" && (
+                    <div className="shrink-0 text-slate-500 group-hover:text-white transition-colors">
+                       <ArrowRight size={14} />
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           </div>
         )}

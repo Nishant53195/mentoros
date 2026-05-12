@@ -10,7 +10,7 @@ import {
   Target, Activity 
 } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { usePreventLeave } from "../../hooks/usePreventLeave"; 
+import { usePreventLeave } from "../../hooks/UsePreventLeave"; 
 
 export default function EnglishPractice() {
   const [activeChip, setActiveChip] = useState("today"); // today, attempted, analysis

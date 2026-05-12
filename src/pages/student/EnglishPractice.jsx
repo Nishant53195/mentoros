@@ -1,16 +1,16 @@
 // src/pages/student/EnglishPractice.jsx
 import { useEffect, useState, useMemo } from "react";
 import { auth, db } from "@/firebase/config";
-import { doc, onSnapshot, setDoc, collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, collection, query, where } from "firebase/firestore";
 import StudentLayout from "@/components/StudentLayout";
 import { Button } from "@/components/ui/button";
 import { 
   CheckCircle2, Trophy, Clock, History, LayoutDashboard, 
   ChevronLeft, ChevronRight, Bookmark, Send, BarChart3, TrendingUp,
-  Target, Activity, Calendar, Medal, Crown 
+  Target, Activity 
 } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { usePreventLeave } from "../../hooks/UsePreventLeave"; // Hook imported here
+import { usePreventLeave } from "../../hooks/usePreventLeave"; 
 
 export default function EnglishPractice() {
   const [activeChip, setActiveChip] = useState("today"); // today, attempted, analysis
@@ -27,9 +27,7 @@ export default function EnglishPractice() {
   const [loading, setLoading] = useState(true);
   const [startTime, setStartTime] = useState(null);
 
-  // ==========================================
-  // PREVENT ACCIDENTAL LEAVE HOOK CALLED HERE
-  // ==========================================
+  // PREVENT ACCIDENTAL LEAVE HOOK
   usePreventLeave(isTesting);
 
   useEffect(() => {
@@ -56,7 +54,7 @@ export default function EnglishPractice() {
   const handleSubmit = async () => {
     if (!window.confirm("Submit your answers?")) return;
     const endTime = Date.now();
-    const secondsUsed = Math.floor((endTime - startTime) / 1000); // Time in seconds
+    const secondsUsed = Math.floor((endTime - startTime) / 1000); 
     let attempted = 0, correct = 0, incorrect = 0;
     
     test.questions.forEach((q, i) => {
@@ -71,7 +69,6 @@ export default function EnglishPractice() {
     const result = { attempted, correct, incorrect, marks };
     const today = new Date().toISOString().split('T')[0];
     
-    // Unique ID for submission: user-date-type
     const subId = `${auth.currentUser.uid}-${today}-${test.type}`;
 
     await setDoc(doc(db, "english_submissions", subId), {
@@ -81,7 +78,7 @@ export default function EnglishPractice() {
       type: test.type,
       scorecard: result,
       answers,
-      timeTaken: secondsUsed, // NEW FIELD
+      timeTaken: secondsUsed, 
       timestamp: new Date().toISOString()
     });
 
@@ -95,7 +92,7 @@ export default function EnglishPractice() {
       <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col font-sans animate-in slide-in-from-right duration-300">
         
         {/* 1. COMPACT HEADER */}
-        <header className="h-14 bg-slate-900 text-white px-4 flex items-center justify-between shrink-0">
+        <header className="h-14 shrink-0 bg-slate-900 text-white px-4 flex items-center justify-between shadow-sm z-30">
           <div className="flex items-center gap-2">
             <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded">Q{currentQ + 1}</span>
             <button 
@@ -113,7 +110,7 @@ export default function EnglishPractice() {
         {/* 2. MAIN CONTENT AREA */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           
-          {/* PASSAGE: On mobile, it's an absolute overlay when toggled. On desktop, it's the left half. */}
+          {/* PASSAGE PANEL */}
           <div className={`
             ${showPassage ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'} 
             absolute lg:relative inset-0 lg:w-1/2 bg-white dark:bg-slate-900 z-20 
@@ -129,40 +126,37 @@ export default function EnglishPractice() {
             </p>
           </div>
 
-          {/* QUESTION AREA: Takes full width on mobile, 1/3rd on desktop */}
-          <div className="flex-1 lg:w-1/3 p-6 lg:p-10 overflow-y-auto bg-slate-50 dark:bg-slate-950">
-            <div className="max-w-2xl mx-auto">
+          {/* QUESTION AREA */}
+          <div className="flex-1 lg:w-1/3 p-4 sm:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+            <div className="max-w-2xl mx-auto pb-12">
               <h4 className="text-xs font-black italic underline mb-4 text-slate-400">Question:</h4>
-              <p className="text-base lg:text-lg font-black text-slate-900 dark:text-white mb-8 leading-tight whitespace-pre-line">
+              <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-6 leading-relaxed whitespace-pre-line">
                 {test.questions[currentQ].questionText}
               </p>
 
-              <div className="space-y-3 pb-24 lg:pb-0">
+              <div className="space-y-3">
                 {test.questions[currentQ].options.map((opt, i) => (
                   <div 
                     key={i} 
                     onClick={() => {
                       if (answers[currentQ] === i) {
-                        // Uncheck if already selected
                         const newAnswers = { ...answers };
                         delete newAnswers[currentQ];
                         setAnswers(newAnswers);
                       } else {
-                        // Check new answer
                         setAnswers({...answers, [currentQ]: i});
                       }
                     }}
-                    className={`flex items-start gap-4 p-4 cursor-pointer border-2 rounded-2xl transition-all select-none ${
+                    className={`flex items-start gap-3 p-3 sm:p-4 cursor-pointer border-2 rounded-2xl transition-all select-none ${
                       answers[currentQ] === i 
                       ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-500/5' 
                       : 'border-white dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-blue-200'
                     }`}
                   >
-                    {/* Replaced native radio with custom div to prevent default radio stuck behavior */}
                     <div className={`w-5 h-5 mt-0.5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${answers[currentQ] === i ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
                        {answers[currentQ] === i && <div className="w-2 h-2 bg-white rounded-full" />}
                     </div>
-                    <span className="text-sm lg:text-base font-bold text-slate-700 dark:text-slate-300 whitespace-pre-line leading-snug">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 whitespace-pre-line leading-snug pt-0.5">
                       {opt}
                     </span>
                   </div>
@@ -171,7 +165,7 @@ export default function EnglishPractice() {
             </div>
           </div>
 
-          {/* PALETTE: Hidden on mobile, shown on desktop side */}
+          {/* PALETTE (Desktop) */}
           <div className="hidden lg:flex w-1/6 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 flex-col">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Question Palette</p>
             <div className="grid grid-cols-4 gap-2">
@@ -195,7 +189,7 @@ export default function EnglishPractice() {
         </div>
 
         {/* 3. MOBILE BOTTOM NAVIGATION */}
-        <footer className="lg:hidden h-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
+        <footer className="lg:hidden h-20 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-30">
           <Button 
             variant="outline" 
             disabled={currentQ === 0} 
@@ -205,7 +199,6 @@ export default function EnglishPractice() {
             <ChevronLeft size={20} />
           </Button>
 
-          {/* Question Counter / Mini Palette Trigger */}
           <div className="text-center">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Question</p>
             <p className="text-sm font-black">{currentQ + 1} / {test.questions.length}</p>
@@ -265,7 +258,7 @@ export default function EnglishPractice() {
                         setTest(t); 
                         setAnswers({});
                         setCurrentQ(0);
-                        setStartTime(Date.now()); // Capture start time
+                        setStartTime(Date.now()); 
                         setIsTesting(true); 
                       }}
                       className="w-full bg-blue-600 text-white font-black h-12 rounded-2xl shadow-lg mt-auto hover:bg-blue-700 transition-all"
@@ -276,7 +269,7 @@ export default function EnglishPractice() {
                 </div>
               );
             })}
-            {!loading && availableTests.length === 0 && (
+            {(!loading && availableTests.length === 0) && (
               <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">No English tasks scheduled for today.</div>
             )}
           </div>
@@ -345,7 +338,7 @@ function ResultView({ sub, onBack }) {
     <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col font-sans animate-in slide-in-from-bottom-5 duration-300">
       
       {/* 1. ADAPTIVE HEADER */}
-      <header className="h-14 bg-slate-900 text-white px-4 flex items-center justify-between shrink-0">
+      <header className="h-14 shrink-0 bg-slate-900 text-white px-4 flex items-center justify-between z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-1 hover:bg-white/10 rounded-full">
             <ChevronLeft size={20} />
@@ -377,7 +370,7 @@ function ResultView({ sub, onBack }) {
       {/* 2. MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
-        {/* PASSAGE PANEL (Mobile Toggle / Desktop Left) */}
+        {/* PASSAGE PANEL */}
         <div className={`
           ${showPassage ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'} 
           absolute lg:relative inset-0 lg:w-1/2 bg-white dark:bg-slate-900 z-20 
@@ -394,8 +387,8 @@ function ResultView({ sub, onBack }) {
         </div>
 
         {/* QUESTION ANALYSIS AREA */}
-        <div className="flex-1 lg:w-1/3 p-6 lg:p-10 overflow-y-auto bg-slate-50 dark:bg-slate-950">
-           <div className="max-w-2xl mx-auto space-y-8 pb-24 lg:pb-0">
+        <div className="flex-1 lg:w-1/3 p-4 sm:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+           <div className="max-w-2xl mx-auto space-y-6 pb-12">
              
              <div className="flex items-center justify-between">
                 <h4 className="text-xs font-black italic underline text-slate-400">Analysis Q{currentQ + 1}</h4>
@@ -408,7 +401,7 @@ function ResultView({ sub, onBack }) {
                 )}
              </div>
 
-             <p className="text-base lg:text-lg font-black text-slate-900 dark:text-white leading-tight whitespace-pre-line">
+             <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-relaxed whitespace-pre-line">
                {testData.questions[currentQ].questionText}
              </p>
 
@@ -420,7 +413,7 @@ function ResultView({ sub, onBack }) {
                  return (
                    <div 
                      key={oIdx} 
-                     className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all ${
+                     className={`flex items-start gap-3 p-3 sm:p-4 rounded-2xl border-2 transition-all ${
                        isCorrect 
                         ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' 
                         : isStudentPick 
@@ -428,10 +421,10 @@ function ResultView({ sub, onBack }) {
                           : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'
                      }`}
                    >
-                     <span className="shrink-0 w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px] font-black">
+                     <span className="shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 border-current flex items-center justify-center text-[10px] font-black">
                         {String.fromCharCode(65 + oIdx)}
                      </span>
-                     <span className="text-sm lg:text-base font-bold whitespace-pre-line leading-snug">
+                     <span className="text-sm font-bold whitespace-pre-line leading-snug pt-0.5">
                        {opt}
                      </span>
                    </div>
@@ -440,11 +433,11 @@ function ResultView({ sub, onBack }) {
              </div>
 
              {/* MENTOR EXPLANATION BOX */}
-             <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2.5rem] border border-blue-100 dark:border-blue-800 shadow-inner">
+             <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-800 shadow-inner mt-6">
                 <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Activity size={14} /> Mentor's Logic
                 </h5>
-                <p className="text-xs font-bold leading-relaxed text-blue-800 dark:text-blue-300 italic whitespace-pre-line">
+                <p className="text-sm font-bold leading-relaxed text-blue-800 dark:text-blue-300 italic whitespace-pre-line">
                   {testData.questions[currentQ].explanation}
                 </p>
              </div>
@@ -483,7 +476,7 @@ function ResultView({ sub, onBack }) {
       </div>
 
       {/* 3. MOBILE BOTTOM NAVIGATION */}
-      <footer className="lg:hidden h-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
+      <footer className="lg:hidden h-20 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-30">
         <Button variant="outline" disabled={currentQ === 0} onClick={() => setCurrentQ(currentQ - 1)} className="rounded-xl font-bold border-slate-200 dark:border-slate-800 h-10 w-12 p-0">
           <ChevronLeft size={20} />
         </Button>
@@ -515,116 +508,14 @@ function LegendItem({ color, label }) {
   );
 }
 
-// COMPONENT: ANALYSIS DASHBOARD (DUAL GRAPHS)
+// COMPONENT: ANALYSIS DASHBOARD (Personal Graphs Only)
 function AnalysisDashboard({ submissions }) {
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const types = ["RC", "Cloze"];
-  const today = new Date().toISOString().split('T')[0];
-
-  // Fetch today's global leaderboard across all students
-  useEffect(() => {
-    setLoadingLeaderboard(true);
-    // Query submissions for today's date, ordered by marks
-    const q = query(
-      collection(db, "english_submissions"), 
-      where("date", "==", today),
-      orderBy("scorecard.marks", "desc"),
-      orderBy("timeTaken", "asc") // Tie-breaker!
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const globalSubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // If a student has multiple entries (RC and Cloze), they will show as separate rows
-      setLeaderboard(globalSubs);
-      setLoadingLeaderboard(false);
-    });
-
-    return () => unsub();
-  }, [today]);
 
   return (
     <div className="space-y-16 pb-20 animate-in fade-in duration-700">
       
-      {/* --- SECTION 1: TODAY'S HALL OF FAME (LEADERBOARD) --- */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-           <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-             <Crown className="text-yellow-500" size={28} /> Today's Hall of Fame
-           </h3>
-           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-2xl">
-             <Calendar size={14} className="text-slate-400" />
-             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-               {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-             </p>
-           </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50 dark:bg-slate-800/50">
-                <tr className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
-                  <th className="p-6">Rank</th>
-                  <th className="p-6">Student</th>
-                  <th className="p-6">Task</th>
-                  <th className="p-6 text-center">Correct</th>
-                  <th className="p-6 text-right">Marks</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {leaderboard.map((entry, index) => {
-                  const isCurrentUser = entry.userId === auth.currentUser.uid;
-                  return (
-                    <tr key={entry.id} className={`${isCurrentUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''} transition-colors`}>
-                      <td className="p-6">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full font-black text-xs">
-                          {index === 0 ? <Medal className="text-yellow-500" size={22}/> : 
-                           index === 1 ? <Medal className="text-slate-300" size={22}/> : 
-                           index === 2 ? <Medal className="text-amber-600" size={22}/> : 
-                           <span className="text-slate-400">{index + 1}</span>}
-                        </div>
-                      </td>
-                      <td className="p-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black uppercase">
-                            {entry.userName?.charAt(0)}
-                          </div>
-                          <span className={`text-sm font-bold ${isCurrentUser ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'}`}>
-                            {entry.userName} {isCurrentUser && "(You)"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-6">
-                        <span className="text-[10px] font-black uppercase text-slate-400 border border-slate-200 dark:border-slate-800 px-2 py-0.5 rounded">
-                          {entry.type}
-                        </span>
-                      </td>
-                      <td className="p-6 text-center text-sm font-black text-emerald-500">
-                        {entry.scorecard.correct}
-                      </td>
-                      <td className="p-6 text-right font-black text-slate-900 dark:text-white">
-                        {entry.scorecard.marks.toFixed(2)}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {leaderboard.length === 0 && !loadingLeaderboard && (
-                  <tr>
-                    <td colSpan="5" className="p-10 text-center text-slate-400 font-bold italic">
-                      No submissions recorded yet. Be the first to rank!
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <div className="px-4"><hr className="border-slate-100 dark:border-slate-800" /></div>
-
-      {/* --- SECTION 2: PERSONAL ANALYTICS (GRAPHS) --- */}
+      {/* --- SECTION 1: PERSONAL ANALYTICS (GRAPHS) --- */}
       <div className="px-2">
         <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
           <Target className="text-blue-600" /> Personal Growth Curve

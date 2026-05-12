@@ -1,9 +1,9 @@
 // src/pages/student/StudentDashboard.jsx
 import { useEffect, useState } from "react";
 import { auth, db } from "@/firebase/config";
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, orderBy } from "firebase/firestore";
 import StudentLayout from "@/components/StudentLayout";
-import { Zap, ArrowRight, Target, Radio, Sparkles } from "lucide-react";
+import { ArrowRight, Target, Radio, Sparkles, Crown, Calendar, Medal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function StudentDashboard() {
@@ -12,6 +12,10 @@ export default function StudentDashboard() {
 
   // Ticker State
   const [notices, setNotices] = useState([]);
+  
+  // Leaderboard State
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
 
   // 1. Fetch User Data
   useEffect(() => {
@@ -21,7 +25,7 @@ export default function StudentDashboard() {
     return () => unsub();
   }, []);
 
-  // 2. The Universal LED Ticker Engine
+  // 2. Fetch LED Ticker Data
   useEffect(() => {
     const user = auth.currentUser;
     if (!user || !userData) return;
@@ -31,13 +35,12 @@ export default function StudentDashboard() {
     // A. Fetch Custom Mentor Broadcasts
     const unsubNotices = onSnapshot(collection(db, "notices"), (snap) => {
       const fetched = snap.docs.map(d => d.data())
-        .filter(n => n.createdAt && n.createdAt.startsWith(today)); // Only show today's broadcasts
+        .filter(n => n.createdAt && n.createdAt.startsWith(today));
 
       const customNotices = fetched.filter(n => {
         if (n.audience === "all") return true;
         if (n.audience === "student" && n.studentId === user.uid) return true;
         if (n.audience === "exam_year") {
-           // Check if user's targets match the broadcast target
            const userExamYears = userData.targetExams?.map(exam => `${exam}-${userData.targetYears?.[exam]}`) || [];
            return userExamYears.includes(`${n.exam}-${n.year}`);
         }
@@ -63,7 +66,6 @@ export default function StudentDashboard() {
                color: "text-emerald-400"
              }));
 
-           // Combine all alerts into the ticker pool
            setNotices([...customNotices, ...engNotices, ...qNotices]);
          });
          return () => unsubQuant();
@@ -74,14 +76,48 @@ export default function StudentDashboard() {
     return () => unsubNotices();
   }, [userData]);
 
+  // 3. Fetch Hall of Fame (Leaderboard)
+  useEffect(() => {
+    setLoadingLeaderboard(true);
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Querying submissions for today's date, ordered by marks
+    const q = query(
+      collection(db, "english_submissions"), 
+      where("date", "==", today),
+      orderBy("scorecard.marks", "desc"),
+      orderBy("timeTaken", "asc")
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      const globalSubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLeaderboard(globalSubs);
+      setLoadingLeaderboard(false);
+    });
+
+    return () => unsub();
+  }, []);
+
   return (
     <StudentLayout>
-      <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
         
-        {/* --- STATIC LED NOTICE BOARD --- */}
+        {/* COMPACT WELCOME HEADER */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h1 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
+            Welcome back, {userData?.name?.split(" ")[0]} <Sparkles className="text-yellow-400" size={18}/>
+          </h1>
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-800">
+            <Target size={14} className="text-blue-500" />
+            <span className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
+              {userData?.targetExams?.[0]} {Object.values(userData?.targetYears || {})[0]}
+            </span>
+          </div>
+        </div>
+
+        {/* STATIC LED NOTICE BOARD (MULTILINE) */}
         {notices.length > 0 && (
           <div className="relative overflow-hidden bg-slate-950 rounded-2xl border border-slate-800 p-1 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
-            {/* Glowing background effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-emerald-600/10 opacity-70"></div>
             
             <div className="relative z-10 flex flex-col w-full py-2">
@@ -94,20 +130,20 @@ export default function StudentDashboard() {
                 <div 
                   key={idx}
                   onClick={() => notice.path !== "#" && navigate(notice.path)}
-                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${notice.path !== "#" ? "cursor-pointer hover:bg-white/5 group" : ""}`}
+                  className={`flex items-start gap-3 px-4 py-3 transition-colors ${notice.path !== "#" ? "cursor-pointer hover:bg-white/5 group" : ""}`}
                 >
-                  {/* Pulsing Red Dot for each list item */}
-                  <div className="flex items-center justify-center shrink-0">
+                  <div className="flex items-center justify-center shrink-0 mt-1">
                      <div className="h-2 w-2 bg-red-500 rounded-full animate-ping absolute"></div>
                      <div className="h-2 w-2 bg-red-500 rounded-full relative"></div>
                   </div>
                   
-                  <div className={`flex-1 font-mono text-xs sm:text-sm font-bold uppercase tracking-wide truncate ${notice.color}`}>
+                  {/* Removed truncate and set break-words for multiline */}
+                  <div className={`flex-1 font-mono text-xs sm:text-sm font-bold uppercase tracking-wide break-words leading-relaxed ${notice.color}`}>
                     {notice.text}
                   </div>
 
                   {notice.path !== "#" && (
-                    <div className="shrink-0 text-slate-500 group-hover:text-white transition-colors">
+                    <div className="shrink-0 text-slate-500 group-hover:text-white transition-colors mt-0.5">
                        <ArrowRight size={14} />
                     </div>
                   )}
@@ -117,70 +153,81 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* COMPACT HERO SECTION */}
-        <div className="bg-slate-900 dark:bg-blue-950 rounded-[2rem] p-6 lg:p-8 text-white relative overflow-hidden shadow-xl border border-slate-800">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/30 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none"></div>
-          
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-black mb-1 text-white tracking-tight flex items-center gap-2">
-                Welcome, {userData?.name?.split(" ")[0]}! <Sparkles className="text-yellow-400" size={24}/>
-              </h1>
-              <p className="text-blue-200/80 font-medium text-sm lg:text-base">
-                Your road to selection starts with today's tasks.
-              </p>
-            </div>
-            
-            {/* Target Badge */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-3 self-start sm:self-center">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Target size={18} className="text-white" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-blue-300 leading-none mb-1">Target</p>
-                <p className="text-sm font-bold">{userData?.targetExams?.[0]} {Object.values(userData?.targetYears || {})[0]}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* QUICK ACTIONS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button 
-            onClick={() => navigate("/student/tasks")}
-            className="group bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-500 transition-all shadow-sm flex flex-col justify-between min-h-[180px]"
-          >
-            <div>
-              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-4 text-blue-600">
-                <Zap size={20} fill="currentColor" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">Daily Tasks</h3>
-              <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-[200px]">
-                Complete your Quant, Reasoning, and English goals.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest pt-4">
-              Start Now <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </div>
-          </button>
-          
-          <div className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center min-h-[180px]">
-             <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Exams</span>
-                   <span className="text-xs font-bold text-slate-900 dark:text-white">{userData?.targetExams?.join(", ")}</span>
-                </div>
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Cycle</span>
-                   <span className="text-xs font-bold text-slate-900 dark:text-white">{Object.values(userData?.targetYears || {})[0]}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</span>
-                   <span className="text-[10px] font-black text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md uppercase">Approved</span>
-                </div>
+        {/* TODAY'S HALL OF FAME (Moved from English Practice) */}
+        <section className="space-y-6 pt-4">
+          <div className="flex items-center justify-between px-2">
+             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+               <Crown className="text-yellow-500" size={28} /> Today's Hall of Fame
+             </h3>
+             <div className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-2xl">
+               <Calendar size={14} className="text-slate-400" />
+               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                 {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+               </p>
              </div>
           </div>
-        </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                    <th className="p-6">Rank</th>
+                    <th className="p-6">Student</th>
+                    <th className="p-6">Task</th>
+                    <th className="p-6 text-center">Correct</th>
+                    <th className="p-6 text-right">Marks</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {leaderboard.map((entry, index) => {
+                    const isCurrentUser = entry.userId === auth.currentUser?.uid;
+                    return (
+                      <tr key={entry.id} className={`${isCurrentUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''} transition-colors`}>
+                        <td className="p-6">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full font-black text-xs">
+                            {index === 0 ? <Medal className="text-yellow-500" size={22}/> : 
+                             index === 1 ? <Medal className="text-slate-300" size={22}/> : 
+                             index === 2 ? <Medal className="text-amber-600" size={22}/> : 
+                             <span className="text-slate-400">{index + 1}</span>}
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
+                              {entry.userName?.charAt(0)}
+                            </div>
+                            <span className={`text-sm font-bold truncate max-w-[120px] sm:max-w-xs ${isCurrentUser ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'}`}>
+                              {entry.userName} {isCurrentUser && "(You)"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <span className="text-[10px] font-black uppercase text-slate-400 border border-slate-200 dark:border-slate-800 px-2 py-0.5 rounded whitespace-nowrap">
+                            {entry.type}
+                          </span>
+                        </td>
+                        <td className="p-6 text-center text-sm font-black text-emerald-500">
+                          {entry.scorecard.correct}
+                        </td>
+                        <td className="p-6 text-right font-black text-slate-900 dark:text-white">
+                          {entry.scorecard.marks.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {leaderboard.length === 0 && !loadingLeaderboard && (
+                    <tr>
+                      <td colSpan="5" className="p-10 text-center text-slate-400 font-bold italic">
+                        No submissions recorded yet. Be the first to rank!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
       </div>
     </StudentLayout>

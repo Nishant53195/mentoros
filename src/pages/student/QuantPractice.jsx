@@ -152,8 +152,8 @@ export default function QuantPractice() {
     return (
       <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans animate-in zoom-in-95 duration-200">
         
-        {/* HEADER */}
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 shadow-sm">
+        {/* HEADER - Added shrink-0 */}
+        <header className="h-16 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shadow-sm">
            <div className="flex items-center gap-4">
              <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-widest">
                Q {currentQ + 1} / {test.questions.length}
@@ -173,9 +173,9 @@ export default function QuantPractice() {
            </div>
         </header>
 
-        {/* MAIN QUESTION AREA - Increased pb-48 for full scrollability */}
+        {/* MAIN QUESTION AREA - Adjusted padding and space-y to fix scrolling */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
-           <div className="w-full max-w-3xl space-y-6 pb-48">
+           <div className="w-full max-w-3xl space-y-6 pb-12">
              
              {/* Reattempt Comparison Banner */}
              {mode === 'reattempt' && isAnswered && previousQData && (
@@ -185,7 +185,7 @@ export default function QuantPractice() {
                 </div>
              )}
 
-             {/* Smaller Question Text */}
+             {/* Question Text - Size reduced slightly */}
              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-relaxed">
                {renderMath(q.questionText)}
              </h3>
@@ -222,14 +222,14 @@ export default function QuantPractice() {
                      className={`p-3 sm:p-4 rounded-2xl border-2 transition-all flex items-start gap-3 group ${boxStyle}`}
                    >
                      <div className="mt-0.5 shrink-0">{icon}</div>
-                     {/* Smaller Option Text */}
+                     {/* Option Text - Size reduced slightly */}
                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200 pt-0.5">{renderMath(opt)}</span>
                    </div>
                  );
                })}
              </div>
 
-             {/* INSTANT EXPLANATION REVEAL WITH TIMER FIX */}
+             {/* INSTANT EXPLANATION REVEAL */}
              {(isAnswered || isReviewMode) && q.explanation && (
                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-[2rem] border border-blue-100 dark:border-blue-800/50 animate-in slide-in-from-bottom-4 mt-6">
                  <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center justify-between">
@@ -246,8 +246,8 @@ export default function QuantPractice() {
            </div>
         </div>
 
-        {/* BOTTOM NAVIGATION PALETTE */}
-        <footer className="fixed bottom-0 w-full h-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        {/* BOTTOM NAVIGATION PALETTE - Removed fixed bottom-0, added shrink-0 */}
+        <footer className="h-20 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-10">
            <Button variant="outline" disabled={currentQ === 0} onClick={() => setCurrentQ(q => q - 1)} className="rounded-xl font-bold border-slate-200 dark:border-slate-700 w-12 h-10 p-0"><ChevronLeft size={20}/></Button>
            
            {/* Mini Palette */}

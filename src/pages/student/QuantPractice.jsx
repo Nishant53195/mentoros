@@ -13,11 +13,20 @@ import {
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 
+// Added renderError to prevent LaTeX from failing silently
 const renderMath = (text) => {
   if (!text) return null;
   const parts = text.split('$');
   return parts.map((part, index) => {
-    if (index % 2 !== 0) return <InlineMath key={index} math={part} />;
+    if (index % 2 !== 0) {
+      return (
+        <InlineMath 
+          key={index} 
+          math={part} 
+          renderError={(error) => <span className="text-red-500 font-mono bg-red-50 px-1 rounded">{part}</span>} 
+        />
+      );
+    }
     return <span key={index}>{part}</span>;
   });
 };
@@ -118,7 +127,7 @@ export default function QuantPractice() {
 
     setTest(null);
     setMode(null);
-    navigate("/student-dashboard"); // Redirect as requested
+    navigate("/student-dashboard", { replace: true }); // Redirect as requested
   };
 
   // --- UI: ACTIVE PRACTICE ENGINE ---
@@ -193,8 +202,6 @@ export default function QuantPractice() {
                      boxStyle = "bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800";
                      icon = <XCircle className="text-red-500" size={24} />;
                    }
-                   
-                   // Review Mode: Highlight what they picked last time if they didn't pick anything this time (Review mode maps perQuestionData directly from db)
                  }
 
                  return (
@@ -210,12 +217,14 @@ export default function QuantPractice() {
                })}
              </div>
 
-             {/* INSTANT EXPLANATION REVEAL */}
+             {/* INSTANT EXPLANATION REVEAL WITH TIMER FIX */}
              {(isAnswered || isReviewMode) && q.explanation && (
                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-[2rem] border border-blue-100 dark:border-blue-800/50 animate-in slide-in-from-bottom-4 mt-8">
                  <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center justify-between">
                    <span>Mentor Explanation</span>
-                   {isAnswered && <span className="text-slate-500 bg-white dark:bg-slate-800 px-2 py-1 rounded">Time Taken: {activeTimer}s</span>}
+                   <span className="text-slate-500 bg-white dark:bg-slate-800 px-2 py-1 rounded">
+                     Time Taken: {perQuestionData[currentQ]?.timeSpent || activeTimer || 0}s
+                   </span>
                  </h4>
                  <div className="text-sm font-bold leading-relaxed text-slate-800 dark:text-slate-200">
                    {renderMath(q.explanation)}
@@ -258,7 +267,6 @@ export default function QuantPractice() {
   }
 
   // --- UI: CHAPTER & TEST SELECTION ---
-  // Get unique chapters that actually have tests
   const activeChapters = [...new Set(availableTests.map(t => t.chapter))];
 
   return (

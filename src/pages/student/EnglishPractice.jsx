@@ -10,6 +10,7 @@ import {
   Target, Activity, Calendar, Medal, Crown 
 } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { usePreventLeave } from "../../hooks/UsePreventLeave"; // Hook imported here
 
 export default function EnglishPractice() {
   const [activeChip, setActiveChip] = useState("today"); // today, attempted, analysis
@@ -18,12 +19,18 @@ export default function EnglishPractice() {
   const [submissions, setSubmissions] = useState([]);
   const [viewingResultId, setViewingResultId] = useState(null);
   const [showPassage, setShowPassage] = useState(false);
+  
   // Exam Engine State
   const [isTesting, setIsTesting] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [startTime, setStartTime] = useState(null);
+
+  // ==========================================
+  // PREVENT ACCIDENTAL LEAVE HOOK CALLED HERE
+  // ==========================================
+  usePreventLeave(isTesting);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -49,8 +56,9 @@ export default function EnglishPractice() {
   const handleSubmit = async () => {
     if (!window.confirm("Submit your answers?")) return;
     const endTime = Date.now();
-  const secondsUsed = Math.floor((endTime - startTime) / 1000); // Time in seconds
+    const secondsUsed = Math.floor((endTime - startTime) / 1000); // Time in seconds
     let attempted = 0, correct = 0, incorrect = 0;
+    
     test.questions.forEach((q, i) => {
       if (answers[i] !== undefined) {
         attempted++;
@@ -74,7 +82,7 @@ export default function EnglishPractice() {
       scorecard: result,
       answers,
       timeTaken: secondsUsed, // NEW FIELD
-    timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString()
     });
 
     setIsTesting(false);
@@ -82,130 +90,130 @@ export default function EnglishPractice() {
   };
 
   // UI: THE EXAM SIMULATOR
- if (isTesting && test) {
-  return (
-    <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col font-sans animate-in slide-in-from-right duration-300">
-      
-      {/* 1. COMPACT HEADER */}
-      <header className="h-14 bg-slate-900 text-white px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded">Q{currentQ + 1}</span>
-          <button 
-            onClick={() => setShowPassage(!showPassage)}
-            className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-lg lg:hidden"
-          >
-            {showPassage ? "Close Passage" : "View Passage"}
-          </button>
-        </div>
-        <div className="flex gap-2">
-           <Button onClick={handleSubmit} className="h-8 text-[10px] font-black bg-red-600 hover:bg-red-700 border-none px-4">SUBMIT</Button>
-        </div>
-      </header>
-
-      {/* 2. MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+  if (isTesting && test) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col font-sans animate-in slide-in-from-right duration-300">
         
-        {/* PASSAGE: On mobile, it's an absolute overlay when toggled. On desktop, it's the left half. */}
-        <div className={`
-          ${showPassage ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'} 
-          absolute lg:relative inset-0 lg:w-1/2 bg-white dark:bg-slate-900 z-20 
-          transition-transform duration-300 ease-in-out p-6 lg:p-10 
-          overflow-y-auto border-r border-slate-200 dark:border-slate-800
-        `}>
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Comprehension</h3>
-             <button onClick={() => setShowPassage(false)} className="lg:hidden text-blue-600 font-black text-xs uppercase">Close ×</button>
+        {/* 1. COMPACT HEADER */}
+        <header className="h-14 bg-slate-900 text-white px-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded">Q{currentQ + 1}</span>
+            <button 
+              onClick={() => setShowPassage(!showPassage)}
+              className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-lg lg:hidden"
+            >
+              {showPassage ? "Close Passage" : "View Passage"}
+            </button>
           </div>
-          <p className="text-sm lg:text-base leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line font-medium">
-            {test.passage}
-          </p>
-        </div>
+          <div className="flex gap-2">
+             <Button onClick={handleSubmit} className="h-8 text-[10px] font-black bg-red-600 hover:bg-red-700 border-none px-4">SUBMIT</Button>
+          </div>
+        </header>
 
-        {/* QUESTION AREA: Takes full width on mobile, 1/3rd on desktop */}
-        <div className="flex-1 lg:w-1/3 p-6 lg:p-10 overflow-y-auto bg-slate-50 dark:bg-slate-950">
-          <div className="max-w-2xl mx-auto">
-            <h4 className="text-xs font-black italic underline mb-4 text-slate-400">Question:</h4>
-            <p className="text-base lg:text-lg font-black text-slate-900 dark:text-white mb-8 leading-tight whitespace-pre-line">
-              {test.questions[currentQ].questionText}
+        {/* 2. MAIN CONTENT AREA */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+          
+          {/* PASSAGE: On mobile, it's an absolute overlay when toggled. On desktop, it's the left half. */}
+          <div className={`
+            ${showPassage ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'} 
+            absolute lg:relative inset-0 lg:w-1/2 bg-white dark:bg-slate-900 z-20 
+            transition-transform duration-300 ease-in-out p-6 lg:p-10 
+            overflow-y-auto border-r border-slate-200 dark:border-slate-800
+          `}>
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Comprehension</h3>
+               <button onClick={() => setShowPassage(false)} className="lg:hidden text-blue-600 font-black text-xs uppercase">Close ×</button>
+            </div>
+            <p className="text-sm lg:text-base leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line font-medium">
+              {test.passage}
             </p>
+          </div>
 
-            <div className="space-y-3 pb-24 lg:pb-0">
-              {test.questions[currentQ].options.map((opt, i) => (
-                <label 
+          {/* QUESTION AREA: Takes full width on mobile, 1/3rd on desktop */}
+          <div className="flex-1 lg:w-1/3 p-6 lg:p-10 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+            <div className="max-w-2xl mx-auto">
+              <h4 className="text-xs font-black italic underline mb-4 text-slate-400">Question:</h4>
+              <p className="text-base lg:text-lg font-black text-slate-900 dark:text-white mb-8 leading-tight whitespace-pre-line">
+                {test.questions[currentQ].questionText}
+              </p>
+
+              <div className="space-y-3 pb-24 lg:pb-0">
+                {test.questions[currentQ].options.map((opt, i) => (
+                  <label 
+                    key={i} 
+                    className={`flex items-start gap-4 p-4 cursor-pointer border-2 rounded-2xl transition-all ${
+                      answers[currentQ] === i 
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-500/5' 
+                      : 'border-white dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm'
+                    }`}
+                  >
+                    <input 
+                      type="radio" 
+                      checked={answers[currentQ] === i} 
+                      onChange={() => setAnswers({...answers, [currentQ]: i})} 
+                      className="w-5 h-5 mt-0.5 accent-blue-600 shrink-0" 
+                    />
+                    <span className="text-sm lg:text-base font-bold text-slate-700 dark:text-slate-300 whitespace-pre-line leading-snug">
+                      {opt}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* PALETTE: Hidden on mobile, shown on desktop side */}
+          <div className="hidden lg:flex w-1/6 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 flex-col">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Question Palette</p>
+            <div className="grid grid-cols-4 gap-2">
+              {test.questions.map((_, i) => (
+                <button 
                   key={i} 
-                  className={`flex items-start gap-4 p-4 cursor-pointer border-2 rounded-2xl transition-all ${
-                    answers[currentQ] === i 
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-500/5' 
-                    : 'border-white dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm'
+                  onClick={() => setCurrentQ(i)} 
+                  className={`h-9 w-9 rounded-lg text-[10px] font-black border transition-all ${
+                    currentQ === i 
+                    ? 'border-blue-600 bg-blue-50 text-blue-600 scale-110 shadow-md' 
+                    : answers[i] !== undefined 
+                      ? 'bg-emerald-500 border-emerald-500 text-white' 
+                      : 'bg-white dark:bg-slate-800 text-slate-400'
                   }`}
                 >
-                  <input 
-                    type="radio" 
-                    checked={answers[currentQ] === i} 
-                    onChange={() => setAnswers({...answers, [currentQ]: i})} 
-                    className="w-5 h-5 mt-0.5 accent-blue-600 shrink-0" 
-                  />
-                  <span className="text-sm lg:text-base font-bold text-slate-700 dark:text-slate-300 whitespace-pre-line leading-snug">
-                    {opt}
-                  </span>
-                </label>
+                  {i + 1}
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* PALETTE: Hidden on mobile, shown on desktop side */}
-        <div className="hidden lg:flex w-1/6 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 flex-col">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Question Palette</p>
-          <div className="grid grid-cols-4 gap-2">
-            {test.questions.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setCurrentQ(i)} 
-                className={`h-9 w-9 rounded-lg text-[10px] font-black border transition-all ${
-                  currentQ === i 
-                  ? 'border-blue-600 bg-blue-50 text-blue-600 scale-110 shadow-md' 
-                  : answers[i] !== undefined 
-                    ? 'bg-emerald-500 border-emerald-500 text-white' 
-                    : 'bg-white dark:bg-slate-800 text-slate-400'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
+        {/* 3. MOBILE BOTTOM NAVIGATION */}
+        <footer className="lg:hidden h-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
+          <Button 
+            variant="outline" 
+            disabled={currentQ === 0} 
+            onClick={() => setCurrentQ(currentQ - 1)}
+            className="rounded-xl border-slate-200 dark:border-slate-800 font-bold"
+          >
+            <ChevronLeft size={20} />
+          </Button>
+
+          {/* Question Counter / Mini Palette Trigger */}
+          <div className="text-center">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Question</p>
+            <p className="text-sm font-black">{currentQ + 1} / {test.questions.length}</p>
           </div>
-        </div>
+
+          <Button 
+            onClick={() => {
+              if(currentQ < test.questions.length - 1) setCurrentQ(currentQ + 1);
+            }}
+            className="rounded-xl bg-blue-600 text-white shadow-lg"
+          >
+            {currentQ === test.questions.length - 1 ? 'End' : <ChevronRight size={20} />}
+          </Button>
+        </footer>
       </div>
-
-      {/* 3. MOBILE BOTTOM NAVIGATION */}
-      <footer className="lg:hidden h-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
-        <Button 
-          variant="outline" 
-          disabled={currentQ === 0} 
-          onClick={() => setCurrentQ(currentQ - 1)}
-          className="rounded-xl border-slate-200 dark:border-slate-800 font-bold"
-        >
-          <ChevronLeft size={20} />
-        </Button>
-
-        {/* Question Counter / Mini Palette Trigger */}
-        <div className="text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Question</p>
-          <p className="text-sm font-black">{currentQ + 1} / {test.questions.length}</p>
-        </div>
-
-        <Button 
-          onClick={() => {
-            if(currentQ < test.questions.length - 1) setCurrentQ(currentQ + 1);
-          }}
-          className="rounded-xl bg-blue-600 text-white shadow-lg"
-        >
-          {currentQ === test.questions.length - 1 ? 'End' : <ChevronRight size={20} />}
-        </Button>
-      </footer>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <StudentLayout>
@@ -244,13 +252,13 @@ export default function EnglishPractice() {
                     </div>
                   ) : (
                     <Button 
-  onClick={() => { 
-    setTest(t); 
-    setAnswers({});
-    setCurrentQ(0);
-    setStartTime(Date.now()); // Capture start time
-    setIsTesting(true); 
-  }}
+                      onClick={() => { 
+                        setTest(t); 
+                        setAnswers({});
+                        setCurrentQ(0);
+                        setStartTime(Date.now()); // Capture start time
+                        setIsTesting(true); 
+                      }}
                       className="w-full bg-blue-600 text-white font-black h-12 rounded-2xl shadow-lg mt-auto hover:bg-blue-700 transition-all"
                     >
                       Start Practice
@@ -310,8 +318,6 @@ export default function EnglishPractice() {
 }
 
 // COMPONENT: SOLUTION REVIEW (SPLIT PANE)
-// src/pages/student/EnglishPractice.jsx
-
 function ResultView({ sub, onBack }) {
   const [testData, setTestData] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);
@@ -501,8 +507,6 @@ function LegendItem({ color, label }) {
 }
 
 // COMPONENT: ANALYSIS DASHBOARD (DUAL GRAPHS)
-// src/pages/student/EnglishPractice.jsx
-
 function AnalysisDashboard({ submissions }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
@@ -514,11 +518,11 @@ function AnalysisDashboard({ submissions }) {
     setLoadingLeaderboard(true);
     // Query submissions for today's date, ordered by marks
     const q = query(
-  collection(db, "english_submissions"), 
-  where("date", "==", today),
-  orderBy("scorecard.marks", "desc"),
-  orderBy("timeTaken", "asc") // Tie-breaker!
-);
+      collection(db, "english_submissions"), 
+      where("date", "==", today),
+      orderBy("scorecard.marks", "desc"),
+      orderBy("timeTaken", "asc") // Tie-breaker!
+    );
 
     const unsub = onSnapshot(q, (snap) => {
       const globalSubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));

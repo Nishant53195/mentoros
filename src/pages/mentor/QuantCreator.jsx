@@ -10,7 +10,7 @@ import {
   User, Calculator, Clock, Folder, Upload
 } from "lucide-react";
 import 'katex/dist/katex.min.css';
-import { InlineMath } from 'react-katex';
+import katex from 'katex';
 
 const CHAPTERS = [
   "Number System", "Percentage", "Ratio & Proportion", "Square roots", "Averages", 
@@ -21,19 +21,29 @@ const CHAPTERS = [
 ];
 
 // Anti-crash LaTeX renderer
+// The Ultimate Crash-Proof KaTeX Renderer
 const renderTextWithMath = (text) => {
   if (!text) return null;
   const parts = text.split('$');
+  
   return parts.map((part, index) => {
+    // Odd indexes are math (because they are inside the $ signs)
     if (index % 2 !== 0) {
-      return (
-        <InlineMath 
-          key={index} 
-          math={part} 
-          renderError={(error) => <span className="text-red-500 font-mono bg-red-50 px-1 rounded">{part}</span>} 
-        />
-      );
+      try {
+        // We ask KaTeX to generate the raw HTML safely
+        const html = katex.renderToString(part, {
+          throwOnError: false, // If there's a typo, it shows it safely instead of crashing
+          displayMode: false,  // Forces it to stay inline with your text
+          strict: false        // Forgives minor LaTeX spacing errors
+        });
+        
+        // We inject the perfect HTML straight into React
+        return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+      } catch (err) {
+        return <span key={index} className="text-red-500">{part}</span>;
+      }
     }
+    // Even indexes are normal text
     return <span key={index}>{part}</span>;
   });
 };
